@@ -6,7 +6,7 @@
  *
  * System properties used:
  *   x_9418_virgil.anthropic_api_key   — sk-ant-api03-… (required)
- *   x_9418_virgil.claude_model        — default claude-sonnet-4-6-20250620
+ *   x_9418_virgil.claude_model        — default claude-sonnet-4-20250514
  *   x_9418_virgil.thinking_budget     — default 8000 (0 to disable)
  */
 var VIRGIL_FIELD_PREFIX = 'x_9418_virgil_';
@@ -53,7 +53,7 @@ VirgilChat.prototype = {
             var userPrompt = this._buildUserPrompt(query, context, queryTypes);
 
             // 5. Call Claude API
-            var model = gs.getProperty('x_9418_virgil.claude_model', 'claude-sonnet-4-6-20250620');
+            var model = gs.getProperty('x_9418_virgil.claude_model', 'claude-sonnet-4-20250514');
             var budgetStr = gs.getProperty('x_9418_virgil.thinking_budget', '8000');
             var thinkingBudget = thinking ? parseInt(budgetStr, 10) || 8000 : 0;
 
