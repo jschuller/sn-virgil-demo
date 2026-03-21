@@ -18,7 +18,7 @@ A scoped ServiceNow application built with the ServiceNow IDE, SDK Fluent, and C
 - GitHub account with a Personal Access Token (repo scope)
 - Anthropic API key for Virgil Chat
 
-### Step 1: Clone into ServiceNow IDE
+### Option A: Clone via ServiceNow IDE
 1. Open `https://YOUR_INSTANCE.service-now.com/sn_glider_app/ide`
 2. `Cmd+Shift+P` > `Git: Set IDE Git credentials` > Basic auth
    - Git repository URL: `https://github.com/jschuller/sn-virgil-demo.git`
@@ -26,11 +26,20 @@ A scoped ServiceNow application built with the ServiceNow IDE, SDK Fluent, and C
    - PAT: your token
 3. `Cmd+Shift+P` > `Git: Clone` > enter the repo URL
 4. Open the cloned workspace
+5. Click **Build and Install** in the IDE status bar
 
-### Step 2: Build and Install
-Click **Build and Install** in the IDE status bar. This deploys all tables, ACLs, roles, Script Includes, REST API endpoints, and BYOUI pages.
+### Option B: Deploy via now-sdk (recommended)
+```bash
+git clone https://github.com/jschuller/sn-virgil-demo.git
+cd sn-virgil-demo
+npm install
+npm run build        # Compiles JSX → .jsdbx, validates Fluent
+now-sdk install      # Deploys to target instance
+```
 
-### Step 3: Set System Properties (post-deploy)
+Both options deploy all tables, ACLs, roles, Script Includes, REST API endpoints, BYOUI pages, and 159 seed records automatically.
+
+### Post-Deploy: Set System Properties
 These are set on the instance, NOT in source code:
 
 | Property | Value | Type |
@@ -41,53 +50,72 @@ These are set on the instance, NOT in source code:
 
 Set via MCP `create_record` on `sys_properties` or directly in the instance UI at `sys_properties.list`.
 
-### Step 4: Load Seed Data (optional)
-Virgil includes 159 seed records (Minos rules, ontology graph, WDF rate card). Load from the companion repo:
-```bash
-git clone https://github.com/jschuller/project-virgil.git
-cd project-virgil
-cp .env.example .env  # fill in instance URL, credentials, scope prefix
-python3 servicenow-app/seed_loader.py
-```
-
-### Step 5: Create Demo User (optional)
+### Post-Deploy: Create Demo User (optional)
 Create a user with the `x_9418_virgil.admin` role to run scans and use Chat.
+
+## What's Included
+
+This repo is a **complete, self-contained** Virgil deployment:
+
+```
+src/
+├── server/              # 7 Script Includes (business logic)
+│   ├── VirgilChat.server.js       # Claude API bridge with extended thinking
+│   ├── MinosScanner.server.js     # Full architecture scan orchestrator
+│   ├── PlutusScanner.server.js    # WDF credit sizing (stub in demo)
+│   ├── MinosOntology.server.js    # Ontology graph management
+│   ├── MinosRuleEngine.server.js  # Rule evaluation engine
+│   ├── VirgilUtils.server.js      # Utility functions
+│   └── VirgilAjax.server.js       # GlideAjax wrapper
+├── client/              # 4 BYOUI React pages
+│   ├── home.html/jsx, chat.html/jsx, minos.html/jsx, plutus.html/jsx
+│   ├── components/      # HomeApp, MinosApp (React components + CSS)
+│   └── services/        # VirgilService.js (REST API client using fetch + g_ck)
+└── fluent/              # SDK Fluent metadata (tables, ACLs, roles, etc.)
+    ├── tables/          # 8 custom tables
+    ├── acls/            # 32 ACLs (8 tables x 4 ops)
+    ├── roles/           # admin + user roles
+    ├── script-includes/ # Script Include declarations
+    ├── rest-api/        # 4 Scripted REST endpoints
+    ├── navigation/      # App menu + modules
+    ├── privileges/      # 32 cross-scope privileges
+    ├── ui-pages/        # 4 UiPage definitions (BYOUI entry points)
+    └── records/         # 159 seed records (rules, ontology, rate cards)
+```
 
 ## Known Limitations
 
-- **Scope prefix is hardcoded**: This repo uses scope `x_9418_virgil` with `scopeId: 5b7456f4c37f3210ccd7be3ed40131f8`. On a fresh PDI, the IDE may assign a different scope prefix and sys_id. The `set-scope.sh` script in the companion repo handles prefix updates. ScopeId behavior on fresh instances needs testing.
-- **Server-side code**: The Script Includes (VirgilChat, MinosScanner, PlutusScanner, etc.) were originally deployed from the companion [project-virgil](https://github.com/jschuller/project-virgil) repo via `now-sdk install`. They may need to be synced separately if not present in this workspace.
-- **API key is NOT in source**: The `anthropic_api_key` property uses `password2` type with `@fluent-disable-sync`. The value must be set post-deploy and will never appear in version control.
+- **Scope prefix is hardcoded**: This repo uses scope `x_9418_virgil`. On a fresh PDI, the IDE may assign a different scope prefix. Use `set-scope.sh` from the companion repo to update all references.
+- **PlutusScanner is a stub**: The full PlutusScanner logic is confidential. This demo includes a stub that returns placeholder data.
+- **API key is NOT in source**: The `anthropic_api_key` property uses `password2` type with `@fluent-disable-sync`. Set post-deploy.
 
-## Architecture
+## Development Workflow
+
+This app demonstrates the **Claude Code + now-sdk** workflow for ServiceNow app development:
 
 ```
-ServiceNow Instance
-├── 8 Custom Tables (Minos scans/findings/rules, Ontology nodes/edges, WDF scans/lines/rate card)
-├── 7 Script Includes (VirgilChat, MinosScanner, PlutusScanner, MinosOntology, MinosRuleEngine, VirgilUtils, VirgilAjax)
-├── 5 Scripted REST API endpoints (Minos scan/history, Plutus scan/history, Virgil chat)
-├── 4 BYOUI React Pages (Home, Minos, Plutus, Chat)
-├── 32 ACLs + 32 Cross-scope privileges
-├── 2 Roles (admin, user)
-└── 3 System Properties (API key, model, thinking budget)
+LOCAL (Claude Code + now-sdk)          SERVICENOW INSTANCE
+─────────────────────────────          ───────────────────
+src/server/*.server.js  ←Claude Code   Tables, ACLs, Roles
+src/client/*.jsx        ←Claude Code   BYOUI Pages
+src/fluent/*.now.ts     ←Claude Code   REST API, Properties
+        │                                     ▲
+        └── npm run build → now-sdk install ──┘
 ```
 
-## Development
+**Advantages over Build Agent:**
+- Unlimited Claude prompts (vs 10/month on PDI)
+- Full codebase context across all files
+- Local IDE with search, refactor, version control
+- CI/CD ready from day one
 
-This app was built using **Claude Code + ServiceNow SDK** as the primary development workflow:
-- Server-side logic: Claude Code editing `.server.js` files locally
-- Fluent definitions: Claude Code editing `.now.ts` files locally
-- BYOUI pages: Build Agent (initial generation) + manual IDE edits
-- Deployment: `now-sdk install` from local + IDE Build & Install
-
-For the full development toolkit including deploy scripts, seed data, and documentation, see [project-virgil](https://github.com/jschuller/project-virgil).
+For the full development toolkit, deploy scripts, and documentation, see [project-virgil](https://github.com/jschuller/project-virgil).
 
 ## Built With
 
 - [ServiceNow SDK (Fluent)](https://www.servicenow.com/docs/r/application-development/servicenow-sdk) — Application metadata as code
 - [Claude Code](https://claude.com/claude-code) — AI-powered development
 - [Anthropic Claude API](https://docs.anthropic.com) — Powers Virgil Chat
-- ServiceNow IDE + Build Agent — BYOUI page generation
 
 ## License
 
