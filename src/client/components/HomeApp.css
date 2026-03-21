@@ -1,0 +1,108 @@
+.virgil-home {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.virgil-header {
+  text-align: center;
+  padding: 60px 20px;
+  color: white;
+}
+
+.virgil-header h1 {
+  font-size: 4rem;
+  font-weight: 300;
+  margin: 0;
+  letter-spacing: 2px;
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  opacity: 0.9;
+  margin: 10px 0 0 0;
+  font-weight: 300;
+}
+
+.nav-cards-container {
+  display: flex;
+  gap: 30px;
+  padding: 40px;
+  justify-content: center;
+  flex-wrap: wrap;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.nav-card {
+  background: white;
+  border-radius: 16px;
+  padding: 40px 30px;
+  width: 280px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.nav-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+}
+
+.card-icon {
+  margin-bottom: 20px;
+  color: #6366f1;
+}
+
+.minos-card .card-icon {
+  color: #10b981;
+}
+
+.plutus-card .card-icon {
+  color: #f59e0b;
+}
+
+.chat-card .card-icon {
+  color: #8b5cf6;
+}
+
+.nav-card h2 {
+  font-size: 1.8rem;
+  margin: 0 0 8px 0;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.nav-card p {
+  color: #6b7280;
+  font-size: 1rem;
+  margin: 0 0 16px 0;
+  font-weight: 500;
+}
+
+.card-description {
+  color: #9ca3af;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-top: 16px;
+}
+
+@media (max-width: 768px) {
+  .nav-cards-container {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+  }
+  
+  .nav-card {
+    width: 100%;
+    max-width: 320px;
+  }
+  
+  .virgil-header h1 {
+    font-size: 3rem;
+  }
+}

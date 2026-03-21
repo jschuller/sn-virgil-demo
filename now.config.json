@@ -1,0 +1,6 @@
+{
+  "scope": "x_9418_virgil",
+  "scopeId": "5b7456f4c37f3210ccd7be3ed40131f8",
+  "name": "Virgil",
+  "tsconfigPath": "./src/server/tsconfig.json"
+}
