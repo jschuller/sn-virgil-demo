@@ -8,6 +8,32 @@ function ChatApp() {
   const [isTyping, setIsTyping] = React.useState(false);
   
   const service = React.useMemo(() => new VirgilService(), []);
+  const messagesEndRef = React.useRef(null);
+
+  React.useEffect(() => {
+    // Initialize mermaid when component mounts
+    if (typeof mermaid !== 'undefined') {
+      mermaid.initialize({ 
+        startOnLoad: false, 
+        theme: 'default',
+        securityLevel: 'loose'
+      });
+    }
+  }, []);
+
+  React.useEffect(() => {
+    // Scroll to bottom when new messages are added
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    
+    // Process mermaid diagrams after messages update
+    setTimeout(() => {
+      if (typeof mermaid !== 'undefined') {
+        mermaid.run({
+          nodes: document.querySelectorAll('.mermaid:not([data-processed])')
+        });
+      }
+    }, 100);
+  }, [messages]);
 
   const sendMessage = async () => {
     if (!inputValue.trim() || isTyping) return;
@@ -30,12 +56,13 @@ function ChatApp() {
       if (response.recommendations && response.recommendations.length > 0) {
         if (content) content += '\n\n**Recommendations:**\n';
         response.recommendations.forEach((rec, index) => {
-          content += `${index + 1}. ${rec}\n`;
+          content += `${index + 1}. **${rec.title || rec}** (${rec.priority || ''})\n   ${rec.description
+            || ''}\n\n`;
         });
       }
       
       if (response.mermaid_diagram) {
-        content += '\n\n**Architecture Diagram:**\n```\n' + response.mermaid_diagram + '\n```';
+        content += '\n\n**Architecture Diagram:**\n```mermaid\n' + response.mermaid_diagram + '\n```';
       }
       
       const aiMessage = { 
@@ -65,13 +92,27 @@ function ChatApp() {
   };
 
   const formatMessage = (content) => {
-    // Simple markdown-like formatting
-    return content
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/`(.*?)`/g, '<code style="background: #f3f4f6; padding: 2px 4px; border-radius: 4px; font-family: monospace;">$1</code>')
-      .replace(/```\n(.*?)\n```/gs, '<pre style="background: #f3f4f6; padding: 12px; border-radius: 8px; font-family: monospace; overflow-x: auto; white-space: pre-wrap;">$1</pre>')
-      .replace(/\n/g, '<br>');
+    if (typeof marked === 'undefined') {
+      // Fallback to simple formatting if marked is not available
+      return content
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/`(.*?)`/g, '<code>$1</code>')
+        .replace(/```mermaid\n(.*?)\n```/gs, '<pre class="mermaid">$1</pre>')
+        .replace(/```\n(.*?)\n```/gs, '<pre><code>$1</code></pre>')
+        .replace(/\n/g, '<br>');
+    }
+
+    // Use marked for proper markdown parsing
+    let html = marked.parse(content);
+    
+    // Convert mermaid code blocks to mermaid elements
+    html = html.replace(
+      /<pre><code class="language-mermaid">([\s\S]*?)<\/code><\/pre>/g,
+      '<pre class="mermaid">$1</pre>'
+    );
+    
+    return html;
   };
 
   return (
@@ -147,7 +188,10 @@ function ChatApp() {
                 boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
                 border: message.isError ? '1px solid #f87171' : 'none'
               }}>
-                <div dangerouslySetInnerHTML={{ __html: formatMessage(message.content) }} />
+                <div 
+                  dangerouslySetInnerHTML={{ __html: formatMessage(message.content) }}
+                  className="message-content"
+                />
                 <div style={{
                   fontSize: '0.75rem',
                   opacity: '0.7',
@@ -205,6 +249,7 @@ function ChatApp() {
               </div>
             </div>
           )}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Input Area */}
@@ -272,20 +317,75 @@ function ChatApp() {
           }
         }
         
-        code {
-          background: #f3f4f6 !important;
-          padding: 2px 4px !important;
-          border-radius: 4px !important;
-          font-family: monospace !important;
+        .message-content h1, .message-content h2, .message-content h3, 
+        .message-content h4, .message-content h5, .message-content h6 {
+          margin: 0.5rem 0;
+          color: inherit;
         }
         
-        pre {
-          background: #f3f4f6 !important;
-          padding: 12px !important;
-          border-radius: 8px !important;
-          font-family: monospace !important;
-          overflow-x: auto !important;
-          white-space: pre-wrap !important;
+        .message-content h2 {
+          font-size: 1.2rem;
+          font-weight: 600;
+        }
+        
+        .message-content h3 {
+          font-size: 1.1rem;
+          font-weight: 600;
+        }
+        
+        .message-content p {
+          margin: 0.5rem 0;
+          line-height: 1.5;
+        }
+        
+        .message-content ul, .message-content ol {
+          margin: 0.5rem 0;
+          padding-left: 1.5rem;
+        }
+        
+        .message-content li {
+          margin: 0.25rem 0;
+        }
+        
+        .message-content code {
+          background: #f3f4f6;
+          padding: 2px 4px;
+          border-radius: 4px;
+          font-family: 'Courier New', monospace;
+          font-size: 0.9rem;
+        }
+        
+        .message-content pre {
+          background: #f8f9fa;
+          padding: 12px;
+          border-radius: 8px;
+          overflow-x: auto;
+          margin: 0.5rem 0;
+        }
+        
+        .message-content pre code {
+          background: transparent;
+          padding: 0;
+          font-family: 'Courier New', monospace;
+          font-size: 0.9rem;
+        }
+        
+        .message-content .mermaid {
+          background: #f8f9fa;
+          padding: 12px;
+          border-radius: 8px;
+          overflow-x: auto;
+          margin: 0.5rem 0;
+          font-family: 'Courier New', monospace;
+          text-align: center;
+        }
+        
+        .message-content strong {
+          font-weight: 600;
+        }
+        
+        .message-content em {
+          font-style: italic;
         }
       `}</style>
     </div>

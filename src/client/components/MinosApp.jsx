@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { VirgilService } from '../services/VirgilService.js';
 import './MinosApp.css';
 
@@ -8,6 +8,28 @@ export default function MinosApp() {
   const [error, setError] = useState(null);
   
   const service = useMemo(() => new VirgilService(), []);
+
+  useEffect(() => {
+    // Initialize mermaid when component mounts
+    if (typeof mermaid !== 'undefined') {
+      mermaid.initialize({ 
+        startOnLoad: false, 
+        theme: 'default',
+        securityLevel: 'loose'
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    // Process mermaid diagrams after scan data updates
+    if (scanData && typeof mermaid !== 'undefined') {
+      setTimeout(() => {
+        mermaid.run({
+          nodes: document.querySelectorAll('.mermaid:not([data-processed])')
+        });
+      }, 100);
+    }
+  }, [scanData]);
 
   const runScan = async () => {
     setIsLoading(true);
@@ -151,22 +173,28 @@ export default function MinosApp() {
             </div>
           )}
 
-          {/* Mermaid Diagrams */}
+          {/* Architecture Diagrams */}
           {(scanData.as_is_diagram || scanData.recommended_diagram) && (
             <div className="diagrams-section">
               <h2>Architecture Diagrams</h2>
-              {scanData.as_is_diagram && (
-                <div className="diagram-container">
-                  <h3>Current (As-Is) Architecture</h3>
-                  <pre className="mermaid-code">{scanData.as_is_diagram}</pre>
-                </div>
-              )}
-              {scanData.recommended_diagram && (
-                <div className="diagram-container">
-                  <h3>Recommended Architecture</h3>
-                  <pre className="mermaid-code">{scanData.recommended_diagram}</pre>
-                </div>
-              )}
+              <div className="diagrams-grid">
+                {scanData.as_is_diagram && (
+                  <div className="diagram-panel">
+                    <h3>Current Architecture (As-Is)</h3>
+                    <div className="diagram-container">
+                      <pre className="mermaid">{scanData.as_is_diagram}</pre>
+                    </div>
+                  </div>
+                )}
+                {scanData.recommended_diagram && (
+                  <div className="diagram-panel">
+                    <h3>Recommended Architecture</h3>
+                    <div className="diagram-container">
+                      <pre className="mermaid">{scanData.recommended_diagram}</pre>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

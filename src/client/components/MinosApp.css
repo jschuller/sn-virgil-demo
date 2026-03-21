@@ -234,28 +234,51 @@
   margin-bottom: 20px;
 }
 
-.diagram-container {
+.diagrams-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  gap: 20px;
+}
+
+.diagram-panel {
   background: white;
   border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
-.diagram-container h3 {
-  color: #374151;
-  margin: 0 0 16px 0;
-}
-
-.mermaid-code {
+.diagram-panel h3 {
   background: #f9fafb;
-  padding: 16px;
+  color: #374151;
+  margin: 0;
+  padding: 16px 20px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.diagram-container {
+  padding: 20px;
+}
+
+.mermaid {
+  background: #f8f9fa;
   border-radius: 8px;
+  overflow-x: auto;
   font-family: 'Courier New', monospace;
   font-size: 0.9rem;
-  overflow-x: auto;
-  color: #374151;
-  white-space: pre-wrap;
+  line-height: 1.4;
+  text-align: center;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mermaid diagram styling when rendered */
+.mermaid svg {
+  max-width: 100%;
+  height: auto;
 }
 
 @media (max-width: 768px) {
@@ -268,5 +291,9 @@
   .table-header span,
   .table-row span {
     padding: 4px 0;
+  }
+  
+  .diagrams-grid {
+    grid-template-columns: 1fr;
   }
 }

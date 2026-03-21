@@ -172,9 +172,9 @@ function PlutusApp() {
                   borderBottom: '1px solid #e5e7eb'
                 }}>
                   <span>Capability</span>
+                  <span>Detected</span>
                   <span>Usage Level</span>
                   <span>Credits</span>
-                  <span>Cost Impact</span>
                 </div>
                 {scanData.lines.map((line, index) => (
                   <div key={index} style={{
@@ -187,31 +187,34 @@ function PlutusApp() {
                   }}>
                     <div>
                       <div style={{ fontWeight: '500', color: '#111827' }}>
-                        {line.x_9418_virgil_capability_name || line.capability}
+                        {line.cap_label || 'Unknown Capability'}
                       </div>
-                      {line.x_9418_virgil_description && (
+                      {line.scan_evidence && (
                         <div style={{ fontSize: '0.9rem', color: '#6b7280', marginTop: '4px' }}>
-                          {line.x_9418_virgil_description}
+                          {line.scan_evidence}
                         </div>
                       )}
                     </div>
+                    <span style={{ textAlign: 'center' }}>
+                      {line.detected ? (
+                        <span style={{ color: '#10b981', fontSize: '1.2rem' }}>✓</span>
+                      ) : (
+                        <span style={{ color: '#6b7280', fontSize: '1.2rem' }}>—</span>
+                      )}
+                    </span>
                     <span style={{
                       padding: '4px 8px',
                       borderRadius: '12px',
                       fontSize: '0.75rem',
                       fontWeight: '600',
-                      backgroundColor: line.x_9418_virgil_usage_level === 'high' ? '#fef3c7' : 
-                                     line.x_9418_virgil_usage_level === 'medium' ? '#dbeafe' : '#f3f4f6',
-                      color: line.x_9418_virgil_usage_level === 'high' ? '#92400e' : 
-                             line.x_9418_virgil_usage_level === 'medium' ? '#1e40af' : '#374151'
+                      backgroundColor: '#f3f4f6',
+                      color: '#374151',
+                      textAlign: 'center'
                     }}>
-                      {(line.x_9418_virgil_usage_level || 'unknown').toUpperCase()}
+                      {line.usage_value || 0} {line.usage_unit || 'units'}
                     </span>
-                    <span style={{ fontWeight: '600', color: '#f59e0b' }}>
-                      {formatCredits(line.x_9418_virgil_credits || 0)}
-                    </span>
-                    <span style={{ color: '#6b7280' }}>
-                      ${formatCredits(line.x_9418_virgil_cost_impact || 0)}
+                    <span style={{ fontWeight: '600', color: '#f59e0b', textAlign: 'right' }}>
+                      {formatCredits(line.credits_consumed || 0)}
                     </span>
                   </div>
                 ))}

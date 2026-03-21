@@ -13,6 +13,10 @@ declare global {
                         table: 'sys_scope_privilege'
                         id: '029cc105c3b7b210ccd7be3ed40131f1'
                     }
+                    '03cce9c9c3bbb210ccd7be3ed4013192': {
+                        table: 'sys_app_module'
+                        id: '03cce9c9c3bbb210ccd7be3ed4013192'
+                    }
                     '069c0505c3b7b210ccd7be3ed4013121': {
                         table: 'sys_scope_privilege'
                         id: '069c0505c3b7b210ccd7be3ed4013121'
@@ -57,6 +61,10 @@ declare global {
                         table: 'sys_scope_privilege'
                         id: '1e9c4505c3b7b210ccd7be3ed4013158'
                     }
+                    '2acce9c9c3bbb210ccd7be3ed401311a': {
+                        table: 'sys_app_module'
+                        id: '2acce9c9c3bbb210ccd7be3ed401311a'
+                    }
                     '300d4945c3b7b210ccd7be3ed40131f9': {
                         table: 'sys_scope_privilege'
                         id: '300d4945c3b7b210ccd7be3ed40131f9'
@@ -68,6 +76,10 @@ declare global {
                     '359c8105c3b7b210ccd7be3ed40131a0': {
                         table: 'sys_scope_privilege'
                         id: '359c8105c3b7b210ccd7be3ed40131a0'
+                    }
+                    '36cce9c9c3bbb210ccd7be3ed4013164': {
+                        table: 'sys_app_module'
+                        id: '36cce9c9c3bbb210ccd7be3ed4013164'
                     }
                     '399c8105c3b7b210ccd7be3ed4013197': {
                         table: 'sys_scope_privilege'
@@ -220,6 +232,10 @@ declare global {
                     '9a9c4dc1c3b7b210ccd7be3ed4013190': {
                         table: 'sys_scope_privilege'
                         id: '9a9c4dc1c3b7b210ccd7be3ed4013190'
+                    }
+                    '9acc69c9c3bbb210ccd7be3ed40131d6': {
+                        table: 'sys_app_module'
+                        id: '9acc69c9c3bbb210ccd7be3ed40131d6'
                     }
                     '9beb8181c3b7b210ccd7be3ed40131ce': {
                         table: 'sys_scope_privilege'
