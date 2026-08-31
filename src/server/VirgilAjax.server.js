@@ -1,4 +1,5 @@
 var VirgilAjax = Class.create();
+/* eslint-disable-next-line no-unsupported-node-builtins -- `global` here is the ServiceNow global scope, not Node's */
 VirgilAjax.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
 
     runMinosScan: function() {

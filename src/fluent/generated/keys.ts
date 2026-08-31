@@ -1792,6 +1792,7 @@ declare global {
                     {
                         table: 'sys_ux_lib_asset'
                         id: '258501e74edd423fb2fbdedcbdbe9010'
+                        deleted: true
                         key: {
                             name: 'x_9418_virgil/VirgilService'
                         }
@@ -2803,6 +2804,7 @@ declare global {
                     {
                         table: 'sys_ux_lib_asset'
                         id: '8837d31f04584f36ba669ac5f7343bf1'
+                        deleted: true
                         key: {
                             name: 'x_9418_virgil/____insertStyle.js.map'
                         }
@@ -2924,6 +2926,7 @@ declare global {
                     {
                         table: 'sys_ux_lib_asset'
                         id: '9872bce9200f41848796a76df48d582c'
+                        deleted: true
                         key: {
                             name: 'x_9418_virgil/____insertStyle'
                         }
@@ -3531,6 +3534,7 @@ declare global {
                     {
                         table: 'sys_ux_lib_asset'
                         id: 'e31dc0dc06104173b47a6e57a6cd6f9b'
+                        deleted: true
                         key: {
                             name: 'x_9418_virgil/VirgilService.js.map'
                         }
@@ -3554,6 +3558,7 @@ declare global {
                     {
                         table: 'sys_ux_lib_asset'
                         id: 'e424896029924339a4165227a384b20f'
+                        deleted: true
                         key: {
                             name: 'x_9418_virgil/client.js.map'
                         }
@@ -3585,6 +3590,7 @@ declare global {
                     {
                         table: 'sys_ux_lib_asset'
                         id: 'e82cb1a58c83419b996bbed86000c104'
+                        deleted: true
                         key: {
                             name: 'x_9418_virgil/client'
                         }

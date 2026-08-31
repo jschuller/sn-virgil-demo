@@ -9,11 +9,14 @@
         "transform": "now-sdk transform",
         "types": "now-sdk dependencies"
     },
+    "engines": {
+        "node": ">=20.18.0"
+    },
     "devDependencies": {
-        "@servicenow/sdk": "4.4.0",
-        "@servicenow/glide": "26.0.1",
-        "eslint": "8.50.0",
-        "@servicenow/eslint-plugin-sdk-app-plugin": "4.4.0"
+        "@servicenow/sdk": "4.11.2",
+        "@servicenow/glide": "27.0.5",
+        "eslint": "8.57.1",
+        "@servicenow/eslint-plugin-sdk-app-plugin": "4.11.2"
     },
     "dependencies": {
         "react": "18.2.0",
