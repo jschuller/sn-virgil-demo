@@ -15,6 +15,7 @@ If you discover a security vulnerability, please report it via [GitHub Security 
 
 ## Security Practices
 
-- Dependencies managed with lockfile pinning and automated updates via Renovate
-- GitHub Actions pinned to commit SHAs
-- Dependabot alerts and secret scanning enabled
+- Dependencies exact-pinned in package.json with a committed package-lock.json
+- Dependabot alerts, security updates, and weekly version updates (`.github/dependabot.yml`)
+- Secret scanning with push protection enabled
+- The Anthropic API key lives only in an instance-side `password2` system property marked `isPrivate` — never in source, never overwritten by deploys
