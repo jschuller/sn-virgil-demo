@@ -140,7 +140,7 @@ Build Agent is still useful for quick prototyping (10 free prompts/month). Use i
 - **Scope prefix is hardcoded**: Uses `x_9418_virgil`. A different PDI may assign a different vendor code. Use `set-scope.sh` from the [companion repo](https://github.com/jschuller/project-virgil) to update.
 - **scopeId is instance-specific**: `now.config.json` contains a scopeId from the original instance. On a fresh PDI, `now-sdk install` creates a new scope with this ID — tested and validated.
 - **PlutusScanner is a stub**: Full logic is confidential. Demo returns placeholder data.
-- **API key is NOT in source**: Uses `password2` type with `@fluent-disable-sync`. Must be set post-deploy.
+- **API key is NOT in source**: Uses `password2` type with `isPrivate: true` (plus `@fluent-disable-sync`). Must be set post-deploy. Note `isPrivate` is the load-bearing half: `@fluent-disable-sync` only stops instance→source sync — without `isPrivate`, every `now-sdk install` overwrites the instance-side key with the (empty) source value.
 - **IDE workspace not auto-created**: `now-sdk install` deploys the app but doesn't create an IDE workspace. Clone this repo in the IDE to get a workspace (Option C above).
 
 ## Built With
