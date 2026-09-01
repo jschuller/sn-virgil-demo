@@ -1,0 +1,61 @@
+# Changelog
+
+All notable changes to this project are documented here. The format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow semver.
+
+## [1.1.0] — 2026-08-31
+
+### Changed
+- **Claude integration migrated to the Claude 5 family.** Default model is now
+  `claude-sonnet-5` (was `claude-sonnet-4-20250514`). Requests use adaptive
+  thinking (`thinking: {type: 'adaptive'}`) with `output_config.effort` —
+  4.6+/5-family models reject the old `budget_tokens` payload with HTTP 400.
+- **Toolchain upgraded**: `@servicenow/sdk` 4.4.0 → 4.11.2,
+  `@servicenow/glide` → 27.0.5, `@servicenow/eslint-plugin-sdk-app-plugin` →
+  4.11.2, `eslint` → 8.57.1. SDK 4.11 bundles BYOUI pages per-page (the shared
+  `client.jsdbx` chunk is retired) and emits explicit per-field dictionary
+  records; deployed behavior is unchanged.
+- `max_tokens` default lowered from a hardcoded 16000 to a property-controlled
+  8000, keeping responses inside ServiceNow's ~60s synchronous outbound REST
+  window (the app uses a 55s timeout; no streaming is possible server-side).
+
+### Added
+- System property `x_9418_virgil.effort` (default `low`) — reasoning effort
+  for current Claude models (`low` | `medium` | `high`; higher risks the 55s
+  timeout).
+- System property `x_9418_virgil.max_tokens` (default `8000`).
+- Legacy compatibility branch: pointing `claude_model` at a date-suffixed
+  model, `claude-haiku-4-5`, or `claude-sonnet-4-5` still sends
+  `budget_tokens` (clamped below `max_tokens`; API minimum 1024).
+- `package-lock.json` is now committed for reproducible builds.
+- `.github/dependabot.yml` — weekly npm version updates, `@servicenow/*`
+  grouped.
+- `engines.node >= 20.18.0` in package.json (the SDK toolchain floor).
+
+### Security
+- Removed the committed password2 ciphertext from the generated api-key
+  property file and marked the property `isPrivate: true`. Without that flag,
+  every `now-sdk install` overwrites the instance-side key with the source
+  value; with it, the instance key survives redeploys (verified).
+  `@fluent-disable-sync` alone only prevents instance→source sync — it does
+  not protect installs.
+- SECURITY.md now claims only verifiably enabled practices; Dependabot
+  version updates are configured to back the automated-updates claim.
+
+### Deprecated
+- `x_9418_virgil.thinking_budget` — used only by the legacy model branch.
+  Use `x_9418_virgil.effort` for current models.
+
+### Deferred (known, intentional)
+- React 18 → 19 (SDK 4.11.2 declares no React constraint; client code is
+  already React-19-safe — deferred as zero user value this round).
+- eslint 9/10 flat-config migration (the ServiceNow eslint plugin publishes
+  no flat-config evidence; `now-sdk build` lints with its own bundled eslint
+  regardless).
+
+## [1.0.0] — 2026-03
+
+Initial public release: Minos architecture scanner, Plutus WDF credit sizing
+(stub), Virgil Chat (Claude-powered analysis), 8 tables, 7 Script Includes,
+5 REST endpoints, 4 BYOUI React pages, seed data — one-command deploy via
+`now-sdk install`.
