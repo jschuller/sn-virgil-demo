@@ -6,8 +6,10 @@
  *
  * System properties used:
  *   x_9418_virgil.anthropic_api_key   — sk-ant-api03-… (required)
- *   x_9418_virgil.claude_model        — default claude-sonnet-4-20250514
- *   x_9418_virgil.thinking_budget     — default 8000 (0 to disable)
+ *   x_9418_virgil.claude_model        — default claude-sonnet-5
+ *   x_9418_virgil.effort              — default low (low|medium|high; 4.6+/5-family models)
+ *   x_9418_virgil.max_tokens          — default 8000
+ *   x_9418_virgil.thinking_budget     — legacy; only used for pre-4.6/date-suffixed models
  */
 var VIRGIL_FIELD_PREFIX = 'x_9418_virgil_';
 var VIRGIL_TABLE_PREFIX = 'x_9418_virgil_';
@@ -53,11 +55,18 @@ VirgilChat.prototype = {
             var userPrompt = this._buildUserPrompt(query, context, queryTypes);
 
             // 5. Call Claude API
-            var model = gs.getProperty('x_9418_virgil.claude_model', 'claude-sonnet-4-20250514');
+            var model = gs.getProperty('x_9418_virgil.claude_model', 'claude-sonnet-5');
+            var effort = gs.getProperty('x_9418_virgil.effort', 'low');
+            var maxTokens = parseInt(gs.getProperty('x_9418_virgil.max_tokens', '8000'), 10) || 8000;
             var budgetStr = gs.getProperty('x_9418_virgil.thinking_budget', '8000');
             var thinkingBudget = thinking ? parseInt(budgetStr, 10) || 8000 : 0;
 
-            var raw = this._callClaude(apiKey, model, systemPrompt, userPrompt, thinkingBudget);
+            var raw = this._callClaude(apiKey, model, systemPrompt, userPrompt, {
+                thinking: thinking,
+                effort: effort,
+                maxTokens: maxTokens,
+                thinkingBudget: thinkingBudget
+            });
 
             // 6. Parse response
             var parsed = this._parseResponse(raw);
@@ -83,7 +92,7 @@ VirgilChat.prototype = {
      * Call Anthropic Messages API via RESTMessageV2.
      * @returns {Object} Raw response body parsed as JSON
      */
-    _callClaude: function(apiKey, model, systemPrompt, userPrompt, thinkingBudget) {
+    _callClaude: function(apiKey, model, systemPrompt, userPrompt, opts) {
         var rm = new sn_ws.RESTMessageV2();
         rm.setEndpoint('https://api.anthropic.com/v1/messages');
         rm.setHttpMethod('POST');
@@ -94,13 +103,25 @@ VirgilChat.prototype = {
 
         var payload = {
             model: model,
-            max_tokens: 16000,
+            max_tokens: opts.maxTokens,
             system: systemPrompt,
             messages: [{ role: 'user', content: userPrompt }]
         };
 
-        if (thinkingBudget > 0) {
-            payload.thinking = { type: 'enabled', budget_tokens: thinkingBudget };
+        // Date-suffixed model IDs and the haiku-4-5 / sonnet-4-5 families use the
+        // legacy budget_tokens thinking API; 4.6+/5-family models reject it (400)
+        // and take adaptive thinking with output_config.effort instead. thinking=false
+        // maps to effort low (not type:disabled) on current models.
+        var isLegacyThinking = /(\d{8}$)|(haiku-4-5)|(sonnet-4-5)/.test(model);
+        if (isLegacyThinking) {
+            // budget_tokens must be < max_tokens; API minimum budget is 1024
+            var budget = Math.min(opts.thinkingBudget, opts.maxTokens - 1024);
+            if (budget >= 1024) {
+                payload.thinking = { type: 'enabled', budget_tokens: budget };
+            }
+        } else {
+            payload.thinking = { type: 'adaptive' };
+            payload.output_config = { effort: opts.thinking ? opts.effort : 'low' };
         }
 
         rm.setRequestBody(JSON.stringify(payload));

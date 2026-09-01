@@ -23,6 +23,9 @@ import './rest-api/virgil-api.now'
 // Navigation
 import './navigation/virgil-menu.now'
 
+// System Properties
+import './properties/virgil-properties.now'
+
 // UI Pages (BYOUI)
 import './ui-pages/virgil-home.now'
 import './ui-pages/virgil-minos.now'

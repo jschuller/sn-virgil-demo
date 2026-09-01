@@ -31,7 +31,7 @@ npm run build                                    # compiles JSX → .jsdbx, vali
 now-sdk install --auth YOUR_ALIAS               # deploys everything to instance
 ```
 
-This single command deploys: 8 tables, 7 Script Includes, 5 REST endpoints, 4 BYOUI pages, 32 ACLs, 32 cross-scope privileges, 2 roles, 159 seed records, and 3 system properties.
+This single command deploys: 8 tables, 7 Script Includes, 5 REST endpoints, 4 BYOUI pages, 32 ACLs, 32 cross-scope privileges, 2 roles, 159 seed records, and 5 system properties.
 
 ### Option B: Clone via ServiceNow IDE
 1. Open `https://YOUR_INSTANCE.service-now.com/sn_glider_app/ide`
@@ -53,8 +53,14 @@ The API key is NOT in source code — set it post-deploy:
 | Property | Value | Type |
 |----------|-------|------|
 | `x_9418_virgil.anthropic_api_key` | Your `sk-ant-...` key | `password2` (encrypted) |
-| `x_9418_virgil.claude_model` | `claude-sonnet-4-20250514` | `string` (auto-set) |
-| `x_9418_virgil.thinking_budget` | `8000` | `integer` (auto-set) |
+| `x_9418_virgil.claude_model` | `claude-sonnet-5` | `string` (auto-set) |
+| `x_9418_virgil.effort` | `low` (`low`\|`medium`\|`high` — higher risks the 55s outbound REST timeout) | `string` (auto-set) |
+| `x_9418_virgil.max_tokens` | `8000` | `integer` (auto-set) |
+| `x_9418_virgil.thinking_budget` | `8000` — legacy, only used for pre-4.6/date-suffixed models | `integer` (auto-set) |
+
+> **Upgrading an existing install?** `now-sdk install` applies the source-defined property values on update, so `claude_model` and friends update automatically. The API key is declared `isPrivate: true` in Fluent — its instance-side value survives redeploys (verified). Without that flag, every install would overwrite the key.
+>
+> **Legacy models**: pointing `claude_model` at a date-suffixed model or `claude-haiku-4-5` uses the legacy `budget_tokens` thinking API. Note haiku tends to generate to the `max_tokens` cap and can exceed the 55s synchronous REST window — lower `max_tokens` (e.g. 4000) if you use it.
 
 Set via instance UI (`sys_properties.list`), MCP, or:
 ```bash
@@ -74,7 +80,7 @@ This repo is a **complete, self-contained** ServiceNow app deployment:
 ```
 src/
 ├── server/              # 7 Script Includes (business logic)
-│   ├── VirgilChat.server.js       # Claude API bridge with extended thinking
+│   ├── VirgilChat.server.js       # Claude API bridge with adaptive thinking
 │   ├── MinosScanner.server.js     # Full architecture scan orchestrator
 │   ├── PlutusScanner.server.js    # WDF credit sizing (stub in demo)
 │   ├── MinosOntology.server.js    # IT4IT ontology graph + mermaid generation
@@ -141,7 +147,7 @@ Build Agent is still useful for quick prototyping (10 free prompts/month). Use i
 
 - [ServiceNow SDK (Fluent)](https://www.servicenow.com/docs/r/application-development/servicenow-sdk) — Application metadata as code
 - [Claude Code](https://claude.com/claude-code) — AI-powered development (Anthropic)
-- [Anthropic Claude API](https://docs.anthropic.com) — Powers Virgil Chat with extended thinking
+- [Anthropic Claude API](https://docs.anthropic.com) — Powers Virgil Chat with adaptive thinking
 - [ServiceNow MCP Server](https://github.com/ServiceNow/mcp-server-servicenow) — Instance automation from Claude Code
 
 ## License

@@ -1309,6 +1309,14 @@ declare global {
                         table: 'sys_script_include'
                         id: '8b583c1935c74ae6a32eae4d76da9fb7'
                     }
+                    virgil_effort_prop: {
+                        table: 'sys_properties'
+                        id: 'de7cbc53bae24ead8856b63d7d2b2089'
+                    }
+                    virgil_max_tokens_prop: {
+                        table: 'sys_properties'
+                        id: '8ab9f8d290d647db9c607c3b34f4621b'
+                    }
                     virgil_utils_si: {
                         table: 'sys_script_include'
                         id: '57a65858b47e4d2a83b169aaebd0de18'
