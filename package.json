@@ -19,7 +19,7 @@
         "@servicenow/eslint-plugin-sdk-app-plugin": "4.11.2"
     },
     "dependencies": {
-        "react": "18.2.0",
+        "react": "19.3.0",
         "react-dom": "18.2.0"
     }
 }
