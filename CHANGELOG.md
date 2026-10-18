@@ -3,7 +3,26 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow semver.
 
-## [1.1.0] — 2026-08-31
+## [Unreleased]
+
+### Security
+- The Virgil REST API requires `x_9418_virgil.user` or `x_9418_virgil.admin` through a
+  REST endpoint ACL. It used the platform default, which only requires a login, and the
+  route scripts' GlideRecord calls skip the table ACLs.
+- Removed `VirgilAjax`, an unused client-callable GlideAjax processor that ran scans and
+  chat with no role check.
+- Chat output is sanitized with DOMPurify after markdown parsing, without images, forms
+  or styles; user messages render as text; mermaid runs with `securityLevel: 'strict'`.
+- marked and DOMPurify are exact-pinned npm dependencies bundled into the page; mermaid
+  is pinned to 12.1.0 on jsDelivr with a sha384 integrity hash (it was "latest", no SRI).
+- History endpoints clamp `?limit` to 1–100.
+
+### Fixed
+- Minos findings sort critical first (critical used to sort last).
+
+### Added
+- `npm test` (node --test, Node 22+) and a CI workflow running build and tests.
+
 
 ### Changed
 - **Claude integration migrated to the Claude 5 family.** Default model is now
