@@ -63,19 +63,6 @@ ScriptInclude({
 })
 
 ScriptInclude({
-    $id: Now.ID['virgil_ajax_si'],
-    name: 'VirgilAjax',
-    description:
-        'Client-callable GlideAjax wrapper for triggering Minos and Plutus scans and LLM chat from workspace UI',
-    active: true,
-    clientCallable: true,
-    script: Now.include('../../server/VirgilAjax.server.js'),
-    apiName: 'x_9418_virgil.VirgilAjax',
-    mobileCallable: false,
-    sandboxCallable: false,
-})
-
-ScriptInclude({
     $id: Now.ID['virgil_chat_si'],
     name: 'VirgilChat',
     description:

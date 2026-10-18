@@ -1,9 +1,11 @@
 import { RestApi } from '@servicenow/sdk/core'
+import { virgilApiAcl } from '../acls/virgil-rest-acls.now'
 
 RestApi({
     $id: Now.ID['virgil_api'],
     name: 'Virgil API',
     serviceId: 'virgil_api',
+    enforceAcl: [virgilApiAcl],
     routes: [
         // ── Minos endpoints ──────────────────────────────────────────────
         {
@@ -21,6 +23,7 @@ RestApi({
     `,
             consumes: 'application/json,application/xml,text/xml',
             produces: 'application/json,application/xml,text/xml',
+            enforceAcl: [virgilApiAcl],
         },
         {
             $id: Now.ID['minos_history_endpoint'],
@@ -29,7 +32,7 @@ RestApi({
             method: 'GET',
             script: `
     (function process(request, response) {
-        var limit = parseInt(request.queryParams.limit) || 10;
+        var limit = Math.min(Math.max(parseInt(request.queryParams.limit, 10) || 10, 1), 100);
         var scans = [];
         var gr = new GlideRecord('x_9418_virgil_minos_scan');
         gr.orderByDesc('x_9418_virgil_scan_date');
@@ -53,6 +56,7 @@ RestApi({
     `,
             consumes: 'application/json,application/xml,text/xml',
             produces: 'application/json,application/xml,text/xml',
+            enforceAcl: [virgilApiAcl],
         },
         // ── Plutus endpoints ─────────────────────────────────────────────
         {
@@ -72,6 +76,7 @@ RestApi({
     `,
             consumes: 'application/json,application/xml,text/xml',
             produces: 'application/json,application/xml,text/xml',
+            enforceAcl: [virgilApiAcl],
         },
         // ── Virgil Chat endpoint ────────────────────────────────────────
         {
@@ -98,6 +103,7 @@ RestApi({
     `,
             consumes: 'application/json,application/xml,text/xml',
             produces: 'application/json,application/xml,text/xml',
+            enforceAcl: [virgilApiAcl],
         },
         {
             $id: Now.ID['plutus_history_endpoint'],
@@ -106,7 +112,7 @@ RestApi({
             method: 'GET',
             script: `
     (function process(request, response) {
-        var limit = parseInt(request.queryParams.limit) || 10;
+        var limit = Math.min(Math.max(parseInt(request.queryParams.limit, 10) || 10, 1), 100);
         var scans = [];
         var gr = new GlideRecord('x_9418_virgil_wdf_scan');
         gr.orderByDesc('x_9418_virgil_scan_date');
@@ -144,6 +150,7 @@ RestApi({
     `,
             consumes: 'application/json,application/xml,text/xml',
             produces: 'application/json,application/xml,text/xml',
+            enforceAcl: [virgilApiAcl],
         },
     ],
 })
