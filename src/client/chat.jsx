@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { VirgilService } from './services/VirgilService.js';
+import { renderMarkdown } from './services/renderMarkdown.js';
 
 function ChatApp() {
   const [messages, setMessages] = React.useState([]);
@@ -11,12 +12,13 @@ function ChatApp() {
   const messagesEndRef = React.useRef(null);
 
   React.useEffect(() => {
-    // Initialize mermaid when component mounts
+    // Initialize mermaid when component mounts. 'strict' keeps HTML labels and click
+    // callbacks out of diagrams, which are built from model output.
     if (typeof mermaid !== 'undefined') {
-      mermaid.initialize({ 
-        startOnLoad: false, 
+      mermaid.initialize({
+        startOnLoad: false,
         theme: 'default',
-        securityLevel: 'loose'
+        securityLevel: 'strict'
       });
     }
   }, []);
@@ -89,30 +91,6 @@ function ChatApp() {
       e.preventDefault();
       sendMessage();
     }
-  };
-
-  const formatMessage = (content) => {
-    if (typeof marked === 'undefined') {
-      // Fallback to simple formatting if marked is not available
-      return content
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        .replace(/`(.*?)`/g, '<code>$1</code>')
-        .replace(/```mermaid\n(.*?)\n```/gs, '<pre class="mermaid">$1</pre>')
-        .replace(/```\n(.*?)\n```/gs, '<pre><code>$1</code></pre>')
-        .replace(/\n/g, '<br>');
-    }
-
-    // Use marked for proper markdown parsing
-    let html = marked.parse(content);
-    
-    // Convert mermaid code blocks to mermaid elements
-    html = html.replace(
-      /<pre><code class="language-mermaid">([\s\S]*?)<\/code><\/pre>/g,
-      '<pre class="mermaid">$1</pre>'
-    );
-    
-    return html;
   };
 
   return (
@@ -188,10 +166,16 @@ function ChatApp() {
                 boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
                 border: message.isError ? '1px solid #f87171' : 'none'
               }}>
-                <div 
-                  dangerouslySetInnerHTML={{ __html: formatMessage(message.content) }}
-                  className="message-content"
-                />
+                {message.type === 'user' ? (
+                  <div className="message-content" style={{ whiteSpace: 'pre-wrap' }}>
+                    {message.content}
+                  </div>
+                ) : (
+                  <div
+                    dangerouslySetInnerHTML={{ __html: renderMarkdown(message.content) }}
+                    className="message-content"
+                  />
+                )}
                 <div style={{
                   fontSize: '0.75rem',
                   opacity: '0.7',

@@ -10,12 +10,13 @@ export default function MinosApp() {
   const service = useMemo(() => new VirgilService(), []);
 
   useEffect(() => {
-    // Initialize mermaid when component mounts
+    // Initialize mermaid when component mounts. 'strict' keeps HTML labels and click
+    // callbacks out of diagrams, whose node names come from the ontology table.
     if (typeof mermaid !== 'undefined') {
-      mermaid.initialize({ 
-        startOnLoad: false, 
+      mermaid.initialize({
+        startOnLoad: false,
         theme: 'default',
-        securityLevel: 'loose'
+        securityLevel: 'strict'
       });
     }
   }, []);
