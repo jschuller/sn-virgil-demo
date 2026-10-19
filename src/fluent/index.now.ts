@@ -13,6 +13,7 @@ import './roles/virgil-roles.now'
 
 // ACLs
 import './acls/virgil-acls.now'
+import './acls/virgil-rest-acls.now'
 
 // Script Includes
 import './script-includes/virgil-script-includes.now'

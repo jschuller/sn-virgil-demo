@@ -7,7 +7,8 @@
         "build": "now-sdk build",
         "deploy": "now-sdk install",
         "transform": "now-sdk transform",
-        "types": "now-sdk dependencies"
+        "types": "now-sdk dependencies",
+        "test": "node --test tests/*.test.mjs"
     },
     "engines": {
         "node": ">=20.18.0"
@@ -16,9 +17,12 @@
         "@servicenow/sdk": "4.11.2",
         "@servicenow/glide": "27.0.5",
         "eslint": "8.57.1",
-        "@servicenow/eslint-plugin-sdk-app-plugin": "4.11.2"
+        "@servicenow/eslint-plugin-sdk-app-plugin": "4.11.2",
+        "jsdom": "30.1.1"
     },
     "dependencies": {
+        "dompurify": "3.4.16",
+        "marked": "18.0.14",
         "react": "18.2.0",
         "react-dom": "18.2.0"
     }

@@ -31,7 +31,7 @@ npm run build                                    # compiles JSX → .jsdbx, vali
 now-sdk install --auth YOUR_ALIAS               # deploys everything to instance
 ```
 
-This single command deploys: 8 tables, 7 Script Includes, 5 REST endpoints, 4 BYOUI pages, 32 ACLs, 32 cross-scope privileges, 2 roles, 159 seed records, and 5 system properties.
+This single command deploys: 8 tables, 6 Script Includes, 5 REST endpoints, 4 BYOUI pages, 33 ACLs, 32 cross-scope privileges, 2 roles, 159 seed records, and 5 system properties.
 
 ### Option B: Clone via ServiceNow IDE
 1. Open `https://YOUR_INSTANCE.service-now.com/sn_glider_app/ide`
@@ -71,7 +71,7 @@ curl -u admin:password https://YOUR_INSTANCE.service-now.com/api/now/table/sys_p
 ```
 
 ### Post-Deploy: Create Demo User (optional)
-Create a user with the `x_9418_virgil.admin` role to run scans and use Chat.
+Create a user with the `x_9418_virgil.user` role to run scans and use Chat; `x_9418_virgil.admin` can also edit rules, scans and the ontology. The Virgil API requires one of these roles: a REST endpoint ACL replaces the platform default, which only requires a login.
 
 ## What's Included
 
@@ -79,14 +79,13 @@ This repo is a **complete, self-contained** ServiceNow app deployment:
 
 ```
 src/
-├── server/              # 7 Script Includes (business logic)
+├── server/              # 6 Script Includes (business logic)
 │   ├── VirgilChat.server.js       # Claude API bridge with adaptive thinking
 │   ├── MinosScanner.server.js     # Full architecture scan orchestrator
 │   ├── PlutusScanner.server.js    # WDF credit sizing (stub in demo)
 │   ├── MinosOntology.server.js    # IT4IT ontology graph + mermaid generation
 │   ├── MinosRuleEngine.server.js  # 45 deterministic architecture rules
-│   ├── VirgilUtils.server.js      # Platform utilities
-│   └── VirgilAjax.server.js       # GlideAjax wrapper
+│   └── VirgilUtils.server.js      # Platform utilities
 ├── client/              # 4 BYOUI React pages
 │   ├── home.html/jsx              # Launchpad
 │   ├── minos.html/jsx             # Architecture scan + mermaid diagrams
@@ -96,7 +95,7 @@ src/
 │   └── services/VirgilService.js  # REST API client (fetch + g_ck CSRF token)
 └── fluent/              # SDK Fluent metadata-as-code
     ├── tables/          # 8 custom tables
-    ├── acls/            # 32 ACLs (8 tables × 4 operations)
+    ├── acls/            # 33 ACLs (8 tables × 4 operations, plus the REST API)
     ├── roles/           # admin + user roles
     ├── script-includes/ # ScriptInclude declarations (Now.include pattern)
     ├── rest-api/        # Scripted REST API (5 endpoints)

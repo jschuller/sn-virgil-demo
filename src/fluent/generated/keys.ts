@@ -1280,6 +1280,7 @@ declare global {
                     src_server_VirgilAjax_server_js: {
                         table: 'sys_module'
                         id: 'a9da6f8a00e648cfa1ec449b326ba4c1'
+                        deleted: true
                     }
                     src_server_VirgilChat_server_js: {
                         table: 'sys_module'
@@ -1292,10 +1293,15 @@ declare global {
                     virgil_ajax_si: {
                         table: 'sys_script_include'
                         id: '8272fcaab55148aeaedd8bb40faf39eb'
+                        deleted: true
                     }
                     virgil_api: {
                         table: 'sys_ws_definition'
                         id: 'd5cd1d1435a44eb286aa05ef0ecd6d36'
+                    }
+                    virgil_api_execute_acl: {
+                        table: 'sys_security_acl'
+                        id: 'a8b4f7ae98bc42a18bc1a822781b832a'
                     }
                     virgil_app_menu: {
                         table: 'sys_app_application'
@@ -2499,6 +2505,19 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_security_acl_role'
+                        id: '715effc1345144bf82504f6deb2236b9'
+                        key: {
+                            sys_security_acl: 'a8b4f7ae98bc42a18bc1a822781b832a'
+                            sys_user_role: {
+                                id: 'b1978bf3ca4a445eacb746661257586f'
+                                key: {
+                                    name: 'x_9418_virgil.user'
+                                }
+                            }
+                        }
+                    },
+                    {
                         table: 'sys_documentation'
                         id: '717bbb54a8954136a2b9127e2952643a'
                         key: {
@@ -3330,6 +3349,19 @@ declare global {
                         key: {
                             name: 'x_9418_virgil_wdf_scan'
                             element: 'NULL'
+                        }
+                    },
+                    {
+                        table: 'sys_security_acl_role'
+                        id: 'c1361af2d84046a993aaf05bd0c881ae'
+                        key: {
+                            sys_security_acl: 'a8b4f7ae98bc42a18bc1a822781b832a'
+                            sys_user_role: {
+                                id: '14e4f368beb44b3293a340fcb18d4715'
+                                key: {
+                                    name: 'x_9418_virgil.admin'
+                                }
+                            }
                         }
                     },
                     {

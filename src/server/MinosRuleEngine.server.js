@@ -90,8 +90,12 @@ MinosRuleEngine.prototype = {
 
         // Sort by severity: critical → high → medium → low
         var sevOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+        var sevRank = function(severity) {
+            // critical ranks 0, so `sevOrder[s] || 9` would push it to the end
+            return sevOrder.hasOwnProperty(severity) ? sevOrder[severity] : 9;
+        };
         findings.sort(function(a, b) {
-            return (sevOrder[a.severity] || 9) - (sevOrder[b.severity] || 9);
+            return sevRank(a.severity) - sevRank(b.severity);
         });
 
         gs.info('Virgil MinosRuleEngine: ' + findings.length + ' findings, ' +
