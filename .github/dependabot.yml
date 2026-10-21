@@ -1,14 +1,22 @@
+# Dependabot version updates. Every update waits out a cooldown (homelab-governance supply-chain baseline, 2026-10-20):
+# 7 days by default, 14 for a semver-major npm bump. github-actions keeps the SHA pins and their "# vX.Y.Z" comments up
+# to date. Merging stays the owner's.
 version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
   - package-ecosystem: npm
     directory: /
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
     groups:
       servicenow-sdk:
         patterns:
