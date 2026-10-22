@@ -24,6 +24,9 @@ All notable changes to this project are documented here. The format follows
   `cap_label`, `scan_evidence`, `usage_unit`), and shows the scanner's message when
   the scan is the demo stub. `/plutus/history` lines now include `evidence`. A test
   checks the page, the route and the table against each other.
+- The README quickstart uses `npm ci`, `npm run build`, `npm run deploy -- --auth
+  <alias>` and `npx now-sdk auth --add … --alias <alias>` instead of a global
+  `now-sdk`, which `npm install` does not provide, and explains where the alias comes from.
 
 ### Added
 - `npm test` (node --test, Node 22+) and a CI workflow running build and tests.

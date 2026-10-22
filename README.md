@@ -25,11 +25,17 @@ A scoped ServiceNow application built with the ServiceNow IDE, SDK Fluent, and C
 ```bash
 git clone https://github.com/jschuller/sn-virgil-demo.git
 cd sn-virgil-demo
-npm install
-now-sdk auth --add YOUR_INSTANCE --type basic   # configure instance credentials
+npm ci                                           # exact versions from package-lock.json
+npx now-sdk auth --add https://YOUR_INSTANCE.service-now.com --type basic --alias YOUR_ALIAS
 npm run build                                    # compiles JSX → .jsdbx, validates Fluent
-now-sdk install --auth YOUR_ALIAS               # deploys everything to instance
+npm run deploy -- --auth YOUR_ALIAS              # now-sdk install: deploys everything to the instance
 ```
+
+The SDK is a project dev dependency, so there is no global `now-sdk` on your PATH: use the npm scripts
+(`npm run build`, `npm run deploy`) or `npx now-sdk …`, which run the pinned version in `node_modules`.
+`now-sdk auth --add` prompts for the username and password, stores them in the OS keychain under the alias you
+give with `--alias`, and `npm run deploy -- --auth YOUR_ALIAS` uses that alias (`npx now-sdk auth --list` shows
+the saved aliases).
 
 This single command deploys: 8 tables, 6 Script Includes, 5 REST endpoints, 4 BYOUI pages, 33 ACLs, 32 cross-scope privileges, 2 roles, 159 seed records, and 5 system properties.
 
