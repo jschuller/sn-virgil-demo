@@ -212,6 +212,19 @@ MinosOntology.prototype = {
             'external': 'External'
         };
 
+        // Node IDs and names come from the ontology tables: emit safe IDs and quoted, escaped labels.
+        // Every ontology id already safe for Mermaid is reserved first, so it keeps its own name.
+        var ids = { byNode: {}, used: {} };
+        for (var sid in this.nodes) {
+            if (this._isMermaidSafeId(sid)) ids.used['$' + sid] = true;
+        }
+        for (var se = 0; se < this.edges.length; se++) {
+            if (this._isMermaidSafeId(this.edges[se].source)) ids.used['$' + this.edges[se].source] = true;
+            if (this._isMermaidSafeId(this.edges[se].target)) ids.used['$' + this.edges[se].target] = true;
+        }
+        var self = this;
+        var idFor = function(nodeId) { return self._mermaidId(ids, nodeId); };
+
         var activeSet = {};
         for (var a = 0; a < activeNodeIds.length; a++) {
             activeSet[activeNodeIds[a]] = true;
@@ -229,12 +242,11 @@ MinosOntology.prototype = {
                 if (mode === 'as_is' && !isActive) continue;
                 if (mode === 'recommended' && !isActive && !isRecommended) continue;
 
-                var style = '';
+                var label = node.name || nid;
                 if (isRecommended && !isActive) {
-                    style = ':::recommended';
-                    layerNodes.push('    ' + nid + '[' + node.name + ' ⭐]' + style);
+                    layerNodes.push('    ' + idFor(nid) + '[' + this._mermaidLabel(label + ' ⭐') + ']:::recommended');
                 } else {
-                    layerNodes.push('    ' + nid + '[' + node.name + ']');
+                    layerNodes.push('    ' + idFor(nid) + '[' + this._mermaidLabel(label) + ']');
                 }
             }
 
@@ -258,7 +270,7 @@ MinosOntology.prototype = {
             var edge = this.edges[ei];
             if (allRelevant[edge.source] && allRelevant[edge.target]) {
                 if (edge.rel_type !== 'extends' && edge.rel_type !== 'segregated_from') {
-                    lines.push('  ' + edge.source + ' --> ' + edge.target);
+                    lines.push('  ' + idFor(edge.source) + ' --> ' + idFor(edge.target));
                 }
             }
         }
@@ -267,6 +279,51 @@ MinosOntology.prototype = {
         lines.push('  classDef recommended fill:#fef3c7,stroke:#f59e0b,stroke-width:2px');
 
         return lines.join('\n');
+    },
+
+    /** True when an ontology id can be a Mermaid node ID as it is: a letter, then letters, digits, _. */
+    _isMermaidSafeId: function(nodeId) {
+        // Words Mermaid's flowchart grammar reserves; a node ID equal to one of them breaks the diagram.
+        var reserved = /^(end|graph|flowchart|subgraph|direction|style|classdef|class|click|call|href|linkstyle|interpolate|default|acctitle|accdescr)$/i;
+        return /^[A-Za-z][A-Za-z0-9_]*$/.test(nodeId) && !reserved.test(nodeId);
+    },
+
+    /**
+     * The Mermaid node ID for an ontology node id within one diagram (`ids` is per generateMermaid
+     * call). A safe id is used as it is. Any other id becomes letters, digits and underscores with an
+     * n_ prefix where needed, plus a numeric suffix if that name is taken, so ids that differ only in
+     * punctuation stay separate nodes and never take a safe id's name.
+     */
+    _mermaidId: function(ids, nodeId) {
+        var key = '$' + nodeId; // keys are prefixed, so an id like "hasOwnProperty" is an ordinary key
+        if (ids.byNode.hasOwnProperty(key)) return ids.byNode[key];
+        var unique = String(nodeId);
+        if (!this._isMermaidSafeId(unique)) {
+            var base = unique.replace(/[^A-Za-z0-9_]/g, '_');
+            if (!this._isMermaidSafeId(base)) base = 'n_' + base;
+            unique = base;
+            for (var n = 2; ids.used.hasOwnProperty('$' + unique); n++) unique = base + '_' + n;
+        }
+        ids.used['$' + unique] = true;
+        ids.byNode[key] = unique;
+        return unique;
+    },
+
+    /**
+     * A quoted Mermaid label. Mermaid entity codes (#quot; #35; …) stand in for every character that
+     * could end the quoted string, start an entity or markdown string, or read as HTML; line breaks
+     * become spaces so a name cannot add statements to the diagram.
+     */
+    _mermaidLabel: function(text) {
+        var escaped = String(text)
+            .replace(/[\r\n\t\u2028\u2029]+/g, ' ')
+            .replace(/#/g, '#35;')
+            .replace(/"/g, '#quot;')
+            .replace(/&/g, '#amp;')
+            .replace(/</g, '#lt;')
+            .replace(/>/g, '#gt;')
+            .replace(/`/g, '#96;');
+        return '"' + escaped + '"';
     },
 
     type: 'MinosOntology'

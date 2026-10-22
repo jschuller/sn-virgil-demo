@@ -16,6 +16,13 @@ All notable changes to this project are documented here. The format follows
 - marked and DOMPurify are exact-pinned npm dependencies bundled into the page; mermaid
   is pinned to 12.1.0 on jsDelivr with a sha384 integrity hash (it was "latest", no SRI).
 - History endpoints clamp `?limit` to 1–100.
+- Minos diagrams escape table-sourced text: `MinosOntology.generateMermaid` quotes
+  every node label and replaces `"`, `#`, `&`, `<`, `>`, backticks and line breaks with
+  Mermaid entity codes or spaces, and turns node ids that are not plain identifiers
+  (punctuation, a leading digit, Mermaid keywords such as `end`) into unique safe IDs,
+  so an ontology node's name or id can no longer break the diagram or add statements
+  to it. The seeded diagrams are unchanged apart from the quotes
+  (`tests/minos-ontology-mermaid.test.mjs`).
 
 ### Fixed
 - Minos findings sort critical first (critical used to sort last).
