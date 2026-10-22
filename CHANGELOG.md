@@ -36,6 +36,11 @@ All notable changes to this project are documented here. The format follows
   `{wf_workflow_count}`); those messages also reach the chat prompt. Whether a rule
   fires is unchanged. A test builds a firing model for each seeded rule and fails on
   any placeholder left in its message or recommendation.
+- `MinosOntology` treats ids, plugins and tables named like `Object.prototype` members
+  (`constructor`, `hasOwnProperty`, `toString`, `valueOf`) as ordinary keys: a
+  `depends_on` edge from `hasOwnProperty` or `constructor` used to stop the ontology
+  from loading, and such names could mark nodes active. It skips, with a warning, a node
+  whose `node_id` is empty or `__proto__` and an edge with such an endpoint.
 - The Plutus page reads the field names that `/plutus/history` and the
   `wdf_scan_line` table use (`capability_label`, `evidence`, `meter_unit`; it read
   `cap_label`, `scan_evidence`, `usage_unit`), and shows the scanner's message when

@@ -75,7 +75,7 @@ describe('generateMermaid with table-sourced names and ids', () => {
   ];
   const ontology = loadOntology({
     x_9418_virgil_ontology_node: hostile,
-    x_9418_virgil_ontology_edge: [edge('end', 'a-b'), edge('a_b', '9lives'), edge('hasOwnProperty', 'evil', 'references'), edge('evil', 'gone')],
+    x_9418_virgil_ontology_edge: [edge('end', 'a-b'), edge('a_b', '9lives'), edge('hasOwnProperty', 'evil', 'depends_on'), edge('evil', 'gone')],
   });
   const ids = hostile.map((n) => n.node_id);
   const diagram = ontology.generateMermaid(ids, 'as_is');

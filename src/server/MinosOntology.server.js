@@ -24,6 +24,11 @@ MinosOntology.prototype = {
         gr.query();
         while (gr.next()) {
             var nid = gr.getValue(FP + 'node_id');
+            // Rhino treats __proto__ specially on every object; an empty id cannot be referenced.
+            if (!nid || nid === '__proto__') {
+                gs.warn('MinosOntology: skipping ontology node ' + gr.getUniqueValue() + ' with unusable node_id "' + (nid || '') + '"');
+                continue;
+            }
             this.nodes[nid] = {
                 id: nid,
                 name: gr.getValue(FP + 'name') || '',
@@ -41,9 +46,16 @@ MinosOntology.prototype = {
         eg.addQuery(FP + 'active', 'true');
         eg.query();
         while (eg.next()) {
+            var source = eg.getValue(FP + 'source_node') || '';
+            var target = eg.getValue(FP + 'target_node') || '';
+            if (!source || !target || source === '__proto__' || target === '__proto__') {
+                gs.warn('MinosOntology: skipping ontology edge ' + eg.getUniqueValue() + ' with unusable node "' +
+                        source + '" -> "' + target + '"');
+                continue;
+            }
             this.edges.push({
-                source: eg.getValue(FP + 'source_node') || '',
-                target: eg.getValue(FP + 'target_node') || '',
+                source: source,
+                target: target,
                 rel_type: eg.getValue(FP + 'rel_type') || '',
                 constraint: eg.getValue(FP + 'constraint') || ''
             });
@@ -51,6 +63,11 @@ MinosOntology.prototype = {
 
         gs.debug('MinosOntology: Loaded ' + Object.keys(this.nodes).length +
                  ' nodes, ' + this.edges.length + ' edges from tables');
+    },
+
+    /** Own-key membership: ids, plugins and tables named like Object.prototype members (toString, constructor) are ordinary keys. */
+    _has: function(map, key) {
+        return Object.prototype.hasOwnProperty.call(map, key);
     },
 
     _parseJSON: function(str, fallback) {
@@ -67,12 +84,12 @@ MinosOntology.prototype = {
             var node = this.nodes[nid];
             for (var p = 0; p < node.plugins.length; p++) {
                 var pid = node.plugins[p];
-                if (!this._pluginToNodes[pid]) this._pluginToNodes[pid] = [];
+                if (!this._has(this._pluginToNodes, pid)) this._pluginToNodes[pid] = [];
                 this._pluginToNodes[pid].push(nid);
             }
             for (var t = 0; t < node.tables.length; t++) {
                 var tbl = node.tables[t];
-                if (!this._tableToNodes[tbl]) this._tableToNodes[tbl] = [];
+                if (!this._has(this._tableToNodes, tbl)) this._tableToNodes[tbl] = [];
                 this._tableToNodes[tbl].push(nid);
             }
         }
@@ -80,7 +97,7 @@ MinosOntology.prototype = {
         for (var ei = 0; ei < this.edges.length; ei++) {
             var edge = this.edges[ei];
             if (edge.rel_type === 'depends_on') {
-                if (!this._productModules[edge.source]) this._productModules[edge.source] = [];
+                if (!this._has(this._productModules, edge.source)) this._productModules[edge.source] = [];
                 this._productModules[edge.source].push(edge.target);
             }
         }
@@ -100,7 +117,7 @@ MinosOntology.prototype = {
 
         // 1. Plugin presence
         for (var pid in model.installed_plugins) {
-            if (this._pluginToNodes[pid]) {
+            if (this._has(this._pluginToNodes, pid)) {
                 var pNodes = this._pluginToNodes[pid];
                 for (var pn = 0; pn < pNodes.length; pn++) {
                     activeIds[pNodes[pn]] = true;
@@ -112,7 +129,7 @@ MinosOntology.prototype = {
         for (var tbl in model.active_tables) {
             if (tbl.indexOf('_') === 0) continue; // skip meta keys like _custom_tables
             var count = model.active_tables[tbl];
-            if (count > 0 && this._tableToNodes[tbl]) {
+            if (count > 0 && this._has(this._tableToNodes, tbl)) {
                 var tNodes = this._tableToNodes[tbl];
                 for (var tn = 0; tn < tNodes.length; tn++) {
                     activeIds[tNodes[tn]] = true;
@@ -124,7 +141,7 @@ MinosOntology.prototype = {
         for (var prod in this._productModules) {
             var modules = this._productModules[prod];
             for (var m = 0; m < modules.length; m++) {
-                if (activeIds[modules[m]]) {
+                if (this._has(activeIds, modules[m])) {
                     activeIds[prod] = true;
                     break;
                 }
@@ -134,7 +151,7 @@ MinosOntology.prototype = {
         // 4. Foundational nodes active if any application is active
         var hasAnyApp = false;
         for (var nid in activeIds) {
-            var node = this.nodes[nid];
+            var node = this._has(this.nodes, nid) ? this.nodes[nid] : null;
             if (node && node.layer === 'application') {
                 hasAnyApp = true;
                 break;
@@ -152,7 +169,7 @@ MinosOntology.prototype = {
         var activeNodeList = [];
         for (var aid in activeIds) {
             activeIdList.push(aid);
-            if (this.nodes[aid]) {
+            if (this._has(this.nodes, aid)) {
                 activeNodeList.push({
                     id: aid,
                     name: this.nodes[aid].name,
@@ -236,8 +253,8 @@ MinosOntology.prototype = {
                 var node = this.nodes[nid];
                 if (node.layer !== layerId) continue;
 
-                var isActive = !!activeSet[nid];
-                var isRecommended = !!recommendedNodes[nid];
+                var isActive = this._has(activeSet, nid);
+                var isRecommended = this._has(recommendedNodes, nid) && !!recommendedNodes[nid];
 
                 if (mode === 'as_is' && !isActive) continue;
                 if (mode === 'recommended' && !isActive && !isRecommended) continue;
@@ -267,7 +284,7 @@ MinosOntology.prototype = {
 
         for (var ei = 0; ei < this.edges.length; ei++) {
             var edge = this.edges[ei];
-            if (allRelevant[edge.source] && allRelevant[edge.target]) {
+            if (this._has(allRelevant, edge.source) && this._has(allRelevant, edge.target)) {
                 if (edge.rel_type !== 'extends' && edge.rel_type !== 'segregated_from') {
                     lines.push('  ' + idFor(edge.source) + ' --> ' + idFor(edge.target));
                 }
