@@ -19,6 +19,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 - Minos findings sort critical first (critical used to sort last).
+- The Plutus page reads the field names that `/plutus/history` and the
+  `wdf_scan_line` table use (`capability_label`, `evidence`, `meter_unit`; it read
+  `cap_label`, `scan_evidence`, `usage_unit`), and shows the scanner's message when
+  the scan is the demo stub. `/plutus/history` lines now include `evidence`. A test
+  checks the page, the route and the table against each other.
 
 ### Added
 - `npm test` (node --test, Node 22+) and a CI workflow running build and tests.

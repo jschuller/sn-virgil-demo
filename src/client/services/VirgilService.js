@@ -1,3 +1,27 @@
+/**
+ * One WDF capability line, as /plutus/history returns it (fields of x_9418_virgil_wdf_scan_line without the
+ * x_9418_virgil_ prefix). PlutusScanner.scan() must return lines in the same shape.
+ *
+ * @typedef {Object} PlutusLine
+ * @property {string} capability_id
+ * @property {string} capability_label
+ * @property {boolean} detected
+ * @property {number} usage_value
+ * @property {string} meter_unit
+ * @property {number} credits_per_unit
+ * @property {number} credits_consumed
+ * @property {string} evidence
+ */
+
+/**
+ * @typedef {Object} PlutusScanResult
+ * @property {string} [status] 'stub' while the demo's PlutusScanner is a placeholder
+ * @property {string} [message]
+ * @property {number} total_credits
+ * @property {number} capabilities_detected
+ * @property {PlutusLine[]} lines
+ */
+
 export class VirgilService {
   constructor() {
     this.baseUrl = '/api/x_9418_virgil/virgil_api';
@@ -27,6 +51,7 @@ export class VirgilService {
     }
   }
 
+  /** @returns {Promise<PlutusScanResult>} */
   async runPlutusScan() {
     try {
       const response = await fetch(`${this.baseUrl}/plutus/scan`, {
