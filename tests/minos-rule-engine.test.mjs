@@ -2,28 +2,17 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
+import { seedRecords, stubGlideRecord } from './helpers/seed-records.mjs';
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8');
 
 // Loads the Script Include with stub Glide globals. `records` feeds the stub GlideRecord that
 // _loadRulesFromTable reads; `warnings` collects gs.warn calls.
 function loadRuleEngine({ records = [], warnings = [] } = {}) {
-  function GlideRecord() {
-    let index = -1;
-    this.addQuery = () => {};
-    this.orderBy = () => {};
-    this.query = () => {};
-    this.next = () => ++index < records.length;
-    this.getValue = (field) => {
-      const value = records[index][field.replace(/^x_9418_virgil_/, '')];
-      return value === undefined || value === null ? null : String(value);
-    };
-    this.getUniqueValue = () => `sys_${index}`;
-  }
   const context = {
     Class: { create: () => function () {} },
     gs: { info() {}, debug() {}, warn: (message) => warnings.push(message) },
-    GlideRecord,
+    GlideRecord: stubGlideRecord({ x_9418_virgil_minos_rule: records }),
   };
   vm.createContext(context);
   vm.runInContext(read('../src/server/MinosRuleEngine.server.js'), context);
@@ -158,20 +147,6 @@ test('_formatMessage fills every placeholder from the evidence and leaves unknow
 
 // ── The seeded rules (src/fluent/records/seed-data.now.ts) ────────────────────
 
-// Each minos_rule Record()'s data as plain values. The source strings are JS literals; vm evaluates them.
-function seededRules() {
-  return read('../src/fluent/records/seed-data.now.ts')
-    .split(/\nRecord\(\{/)
-    .filter((chunk) => chunk.includes("table: 'x_9418_virgil_minos_rule'"))
-    .map((chunk) => {
-      const data = {};
-      for (const [, key, literal] of chunk.matchAll(/^\s+x_9418_virgil_(\w+): ('(?:[^'\\]|\\.)*'|true|false|-?\d+),?$/gm)) {
-        data[key] = vm.runInNewContext(literal);
-      }
-      return data;
-    });
-}
-
 const KNOWN_CHECKS = new Set([
   'node_absent', 'node_active', 'plugin_absent', 'plugin_present', 'table_lte', 'table_eq', 'table_gt',
   'table_between', 'table_exceeds', 'table_ratio_below', 'cmdb_below', 'cmdb_gt', 'cmdb_flag_false',
@@ -199,7 +174,7 @@ function walk(block, found = { types: [], keys: new Set() }) {
 }
 
 describe('seeded rules', () => {
-  const rules = seededRules();
+  const rules = seedRecords('x_9418_virgil_minos_rule');
 
   test('are found, with unique ids', () => {
     assert.ok(rules.length >= 35, `found ${rules.length}`);
