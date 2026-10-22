@@ -109,9 +109,11 @@ describe('combinators', () => {
     assert.deepEqual(miss, { fired: false, evidence: { change_request_count: 0 } });
   });
 
-  test('any fires on the first check that fires', () => {
+  test('any fires when one check fires and keeps the evidence of every check', () => {
     const hit = block({ any: [{ table_gt: { table: 'change_request', value: 0 } }, { table_gt: { table: 'incident', value: 5 } }] }, m);
     assert.deepEqual(hit, { fired: true, evidence: { change_request_count: 0, incident_count: 10 } });
+    const first = block({ any: [{ table_gt: { table: 'incident', value: 5 } }, { table_lte: { table: 'change_request', value: 3 } }] }, m);
+    assert.deepEqual(first, { fired: true, evidence: { incident_count: 10, change_request_count: 0 } }, 'checks after the first hit still add evidence');
     assert.equal(block({ any: [{ node_active: 'spm' }, { node_active: 'grc' }] }, m).fired, false);
   });
 
@@ -218,6 +220,48 @@ describe('seeded rules', () => {
     assert.deepEqual(warnings, []);
   });
 
+  // A model that makes `block` fire, satisfying only the first branch of each `any`, so the other branches'
+  // evidence must still come from evaluating them.
+  function firingModel(block, m = model()) {
+    const set = (obj, key, value) => { m[obj] = { ...m[obj], [key]: value }; };
+    if (block.streams_covered_below) return m; // an empty model covers no stream
+    for (const [type, arg] of Object.entries(block)) {
+      if (type === 'all') arg.forEach((child) => firingModel(child, m));
+      else if (type === 'any') firingModel(arg[0], m);
+      else if (type === 'node_absent') m.active_node_ids = m.active_node_ids.filter((id) => id !== arg);
+      else if (type === 'node_active') m.active_node_ids = [...m.active_node_ids, arg];
+      else if (type === 'table_gt') set('active_tables', arg.table, arg.value + 1);
+      else if (type === 'table_lte' || type === 'table_eq') set('active_tables', arg.table, arg.value);
+      else if (type === 'table_between') set('active_tables', arg.table, arg.min);
+      else if (type === 'table_exceeds') set('active_tables', arg.table, (m.active_tables[arg.other] ?? 0) + 1);
+      else if (type === 'table_ratio_below') {
+        // Keep counts that earlier checks set; raise the other table until the ratio holds.
+        const count = m.active_tables[arg.table] ?? 0;
+        set('active_tables', arg.table, count);
+        set('active_tables', arg.other, Math.max(m.active_tables[arg.other] ?? 1, Math.floor(count / arg.ratio) + 1));
+      }
+      else if (type === 'cmdb_below') set('cmdb_stats', arg.field, arg.value - 1);
+      else if (type === 'cmdb_gt') set('cmdb_stats', arg.field, arg.value + 1);
+      else if (type === 'cmdb_flag_false') set('cmdb_stats', arg, false);
+      else if (type === 'property_neq') set('instance_properties', arg.property, `not-${arg.value}`);
+      else if (type === 'mid_server_eq') m.mid_servers = Array.from({ length: arg }, () => ({}));
+      else if (type === 'flow_count_eq') m.integration_flows_count = arg;
+      else throw new Error(`firingModel: no recipe for ${type}`);
+    }
+    return m;
+  }
+
+  for (const rule of rules) {
+    test(`${rule.rule_id}: fires on a model built for it and fills every placeholder`, () => {
+      const engine = loadRuleEngine({ records: [rule] });
+      engine.rules = engine._loadRulesFromTable();
+      const { findings } = plain(engine.evaluate(firingModel(JSON.parse(rule.eval_json))));
+      assert.equal(findings.length, 1, 'fires');
+      assert.doesNotMatch(findings[0].message, /\{\w[\w.]*\}/, 'message');
+      assert.doesNotMatch(findings[0].recommendation, /\{\w[\w.]*\}/, 'recommendation');
+    });
+  }
+
   test('IT4IT-S2P-001 fires without SPM on a busy instance, and not with SPM', () => {
     const engine = loadRuleEngine({ records: rules.filter((r) => r.rule_id === 'IT4IT-S2P-001') });
     engine.rules = engine._loadRulesFromTable();
@@ -225,9 +269,7 @@ describe('seeded rules', () => {
     const { findings } = plain(engine.evaluate(model(busy)));
     assert.equal(findings.length, 1);
     assert.equal(findings[0].severity, 'high');
-    // Only the prefix: `any` stops at the first check that fires, so {incident_count} is left unfilled here.
-    // That is current engine behaviour, recorded rather than changed by these tests.
-    assert.match(findings[0].message, /^No SPM but 600 changes/);
+    assert.equal(findings[0].message, 'No SPM but 600 changes + 2,500 incidents. Operational complexity without portfolio governance.');
     assert.equal(plain(engine.evaluate(model({ ...busy, active_node_ids: ['spm'] }))).findings.length, 0);
   });
 

@@ -30,6 +30,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 - Minos findings sort critical first (critical used to sort last).
+- Minos `any` blocks evaluate every check and keep all their evidence, so finding
+  messages no longer show raw placeholders (IT4IT-S2P-001 `{incident_count}`,
+  IT4IT-R2F-003 and ADOPT-002 `{kb_knowledge_count}`, INT-LEG-001
+  `{wf_workflow_count}`); those messages also reach the chat prompt. Whether a rule
+  fires is unchanged. A test builds a firing model for each seeded rule and fails on
+  any placeholder left in its message or recommendation.
 - The Plutus page reads the field names that `/plutus/history` and the
   `wdf_scan_line` table use (`capability_label`, `evidence`, `meter_unit`; it read
   `cap_label`, `scan_evidence`, `usage_unit`), and shows the scanner's message when

@@ -228,12 +228,17 @@ MinosRuleEngine.prototype = {
         }
 
         if (block.any) {
+            // Checks have no side effects: evaluate every branch so the evidence (and so the message
+            // placeholders) covers all of them, not just the checks before the first one that fires.
+            var anyFired = false;
             for (var j = 0; j < block.any.length; j++) {
                 var r2 = this._evalCheck(block.any[j], model);
-                for (var k2 in r2.evidence) evidence[k2] = r2.evidence[k2];
-                if (r2.fired) return { fired: true, evidence: evidence };
+                for (var k2 in r2.evidence) {
+                    if (Object.prototype.hasOwnProperty.call(r2.evidence, k2)) evidence[k2] = r2.evidence[k2];
+                }
+                if (r2.fired) anyFired = true;
             }
-            return { fired: false, evidence: evidence };
+            return { fired: anyFired, evidence: evidence };
         }
 
         if (block.streams_covered_below) {
