@@ -147,6 +147,17 @@ test('_formatMessage fills every placeholder from the evidence and leaves unknow
   assert.equal(engine._formatMessage('stream: {covered_streams}', { covered_streams: 'none' }), 'stream: none');
 });
 
+test('_formatMessage matches evidence keys literally and inserts values as plain text', () => {
+  const engine = loadRuleEngine();
+  assert.equal(engine._formatMessage('{a.b} {aXb}', { 'a.b': 1 }), '1 {aXb}', '. is not a wildcard');
+  assert.equal(engine._formatMessage('{x(} {y*} {z[1]}', { 'x(': 'p', 'y*': 'q', 'z[1]': 'r' }), 'p q r', 'no invalid RegExp');
+  assert.equal(engine._formatMessage('value: {v}', { v: 'costs $& and $1' }), 'value: costs $& and $1');
+  assert.equal(
+    engine._formatMessage('{glide.sys.domain.enabled}', { 'glide.sys.domain.enabled': '(not set)' }),
+    '(not set)'
+  );
+});
+
 // ── The seeded rules (src/fluent/records/seed-data.now.ts) ────────────────────
 
 const KNOWN_CHECKS = new Set([

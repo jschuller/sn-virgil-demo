@@ -260,9 +260,14 @@ MinosRuleEngine.prototype = {
         if (!template) return '';
         var msg = template;
         for (var key in evidence) {
+            if (!Object.prototype.hasOwnProperty.call(evidence, key)) continue;
             var val = evidence[key];
             if (typeof val === 'number') val = val.toLocaleString();
-            msg = msg.replace(new RegExp('\\{' + key + '\\}', 'g'), String(val));
+            // Keys come from rule JSON (table, field and property names): match them literally.
+            var literal = key.replace(/[.*+?^${}()|[\]\\\/]/g, '\\$&');
+            // A function replacement keeps $ in a value from being read as a replacement pattern.
+            var text = String(val);
+            msg = msg.replace(new RegExp('\\{' + literal + '\\}', 'g'), function() { return text; });
         }
         return msg;
     },
