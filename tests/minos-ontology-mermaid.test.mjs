@@ -25,7 +25,8 @@ const LINE_SHAPES = [
   /^graph TB$/,
   /^ {2}subgraph [A-Za-z ]+$/,
   /^ {2}end$/,
-  new RegExp(`^ {4}(${ID})\\["([^"\\n]*)"\\](:::recommended)?$`),
+  // A label is never empty and never holds a raw % (Mermaid finds %% comments and %%{init}%% directives even in quotes).
+  new RegExp(`^ {4}(${ID})\\["([^"\\n%]+)"\\](:::recommended)?$`),
   new RegExp(`^ {2}(${ID}) --> (${ID})$`),
   /^ {2}classDef recommended fill:#fef3c7,stroke:#f59e0b,stroke-width:2px$/,
 ];
@@ -66,6 +67,11 @@ describe('generateMermaid with table-sourced names and ids', () => {
     node('9lives', 'Digit id'),
     node('hasOwnProperty', 'Object method id'),
     node('blank', ''),
+    node('spaces', ' \n\t '),
+    node('init', "x%%{init: {'theme':'forest','themeCSS':'.node rect{fill:red}','flowchart':{'htmlLabels':true}}}%%"),
+    node('unclosed', 'x%%{ y'),
+    node('comment', 'x %% y'),
+    node('wholeinit', "%%{init: {'theme':'dark'}}%%"),
   ];
   const ontology = loadOntology({
     x_9418_virgil_ontology_node: hostile,
@@ -83,9 +89,20 @@ describe('generateMermaid with table-sourced names and ids', () => {
   test('labels show the original names', () => {
     const shown = [...declared.values()].map(decode);
     for (const n of hostile) {
-      const expected = (n.name || n.node_id).replace(/[\r\n]+/g, ' ');
+      const expected = (n.name || '').replace(/[\r\n\t]+/g, ' ').trim() || n.node_id;
       assert.ok(shown.includes(expected), `label for ${n.node_id}: ${expected}`);
     }
+  });
+
+  test('no % reaches the diagram, so no name can carry an init directive or a comment', () => {
+    assert.ok(!diagram.includes('%'), diagram);
+    assert.equal(decode(declared.get('init')), hostile.find((n) => n.node_id === 'init').name);
+    assert.equal(declared.get('unclosed'), 'x#37;#37;{ y');
+  });
+
+  test('a blank name shows the node id instead of an empty label', () => {
+    assert.equal(declared.get('blank'), 'blank');
+    assert.equal(declared.get('spaces'), 'spaces');
   });
 
   test('ids are safe, unique and keep safe ids as they are', () => {

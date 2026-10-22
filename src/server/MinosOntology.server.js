@@ -242,11 +242,10 @@ MinosOntology.prototype = {
                 if (mode === 'as_is' && !isActive) continue;
                 if (mode === 'recommended' && !isActive && !isRecommended) continue;
 
-                var label = node.name || nid;
                 if (isRecommended && !isActive) {
-                    layerNodes.push('    ' + idFor(nid) + '[' + this._mermaidLabel(label + ' ⭐') + ']:::recommended');
+                    layerNodes.push('    ' + idFor(nid) + '[' + this._mermaidLabel(node.name, nid, ' ⭐') + ']:::recommended');
                 } else {
-                    layerNodes.push('    ' + idFor(nid) + '[' + this._mermaidLabel(label) + ']');
+                    layerNodes.push('    ' + idFor(nid) + '[' + this._mermaidLabel(node.name, nid, '') + ']');
                 }
             }
 
@@ -310,14 +309,18 @@ MinosOntology.prototype = {
     },
 
     /**
-     * A quoted Mermaid label. Mermaid entity codes (#quot; #35; …) stand in for every character that
-     * could end the quoted string, start an entity or markdown string, or read as HTML; line breaks
-     * become spaces so a name cannot add statements to the diagram.
+     * A quoted Mermaid label for a node name, followed by `suffix`. Mermaid entity codes (#quot; #35;
+     * #37; …) stand in for every character that could end the quoted string, start an entity, a
+     * markdown string or a %% comment or %%{init}%% directive (Mermaid finds those even inside quotes),
+     * or read as HTML; line breaks become spaces. A blank name falls back to the node id, so a label
+     * is never empty (Mermaid rejects [""]).
      */
-    _mermaidLabel: function(text) {
-        var escaped = String(text)
-            .replace(/[\r\n\t\u2028\u2029]+/g, ' ')
+    _mermaidLabel: function(name, nodeId, suffix) {
+        var text = String(name || '').replace(/[\r\n\t\u2028\u2029]+/g, ' ').trim();
+        if (!text) text = String(nodeId || '').replace(/[\r\n\t\u2028\u2029]+/g, ' ').trim() || '(unnamed)';
+        var escaped = (text + (suffix || ''))
             .replace(/#/g, '#35;')
+            .replace(/%/g, '#37;')
             .replace(/"/g, '#quot;')
             .replace(/&/g, '#amp;')
             .replace(/</g, '#lt;')
