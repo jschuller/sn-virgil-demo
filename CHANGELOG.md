@@ -30,6 +30,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 - `npm test` (node --test, Node 22+) and a CI workflow running build and tests.
+- Tests for the Minos rule engine (`tests/minos-rule-engine.test.mjs`): every check
+  type, the `all`/`any`/`streams_covered_below` combinators, `_formatMessage`,
+  `_loadRulesFromTable`, and each seeded rule in `seed-data.now.ts` (valid
+  `eval_json` with known checks only, message placeholders the rule can fill, an
+  evaluation without unknown-check warnings). Tests for `VirgilChat._parseResponse`
+  and `_sanitizeMermaid` (`tests/virgil-chat-parse.test.mjs`). Both load the Script
+  Includes in a Node vm with stubbed Glide globals.
 
 
 ### Changed
