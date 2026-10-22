@@ -24,6 +24,11 @@ MinosOntology.prototype = {
         gr.query();
         while (gr.next()) {
             var nid = gr.getValue(FP + 'node_id');
+            // Rhino treats __proto__ specially on every object; an empty id cannot be referenced.
+            if (!nid || nid === '__proto__') {
+                gs.warn('MinosOntology: skipping ontology node ' + gr.getUniqueValue() + ' with unusable node_id "' + (nid || '') + '"');
+                continue;
+            }
             this.nodes[nid] = {
                 id: nid,
                 name: gr.getValue(FP + 'name') || '',
@@ -41,9 +46,16 @@ MinosOntology.prototype = {
         eg.addQuery(FP + 'active', 'true');
         eg.query();
         while (eg.next()) {
+            var source = eg.getValue(FP + 'source_node') || '';
+            var target = eg.getValue(FP + 'target_node') || '';
+            if (!source || !target || source === '__proto__' || target === '__proto__') {
+                gs.warn('MinosOntology: skipping ontology edge ' + eg.getUniqueValue() + ' with unusable node "' +
+                        source + '" -> "' + target + '"');
+                continue;
+            }
             this.edges.push({
-                source: eg.getValue(FP + 'source_node') || '',
-                target: eg.getValue(FP + 'target_node') || '',
+                source: source,
+                target: target,
                 rel_type: eg.getValue(FP + 'rel_type') || '',
                 constraint: eg.getValue(FP + 'constraint') || ''
             });
@@ -51,6 +63,11 @@ MinosOntology.prototype = {
 
         gs.debug('MinosOntology: Loaded ' + Object.keys(this.nodes).length +
                  ' nodes, ' + this.edges.length + ' edges from tables');
+    },
+
+    /** Own-key membership: ids, plugins and tables named like Object.prototype members (toString, constructor) are ordinary keys. */
+    _has: function(map, key) {
+        return Object.prototype.hasOwnProperty.call(map, key);
     },
 
     _parseJSON: function(str, fallback) {
@@ -67,12 +84,12 @@ MinosOntology.prototype = {
             var node = this.nodes[nid];
             for (var p = 0; p < node.plugins.length; p++) {
                 var pid = node.plugins[p];
-                if (!this._pluginToNodes[pid]) this._pluginToNodes[pid] = [];
+                if (!this._has(this._pluginToNodes, pid)) this._pluginToNodes[pid] = [];
                 this._pluginToNodes[pid].push(nid);
             }
             for (var t = 0; t < node.tables.length; t++) {
                 var tbl = node.tables[t];
-                if (!this._tableToNodes[tbl]) this._tableToNodes[tbl] = [];
+                if (!this._has(this._tableToNodes, tbl)) this._tableToNodes[tbl] = [];
                 this._tableToNodes[tbl].push(nid);
             }
         }
@@ -80,7 +97,7 @@ MinosOntology.prototype = {
         for (var ei = 0; ei < this.edges.length; ei++) {
             var edge = this.edges[ei];
             if (edge.rel_type === 'depends_on') {
-                if (!this._productModules[edge.source]) this._productModules[edge.source] = [];
+                if (!this._has(this._productModules, edge.source)) this._productModules[edge.source] = [];
                 this._productModules[edge.source].push(edge.target);
             }
         }
@@ -100,7 +117,7 @@ MinosOntology.prototype = {
 
         // 1. Plugin presence
         for (var pid in model.installed_plugins) {
-            if (this._pluginToNodes[pid]) {
+            if (this._has(this._pluginToNodes, pid)) {
                 var pNodes = this._pluginToNodes[pid];
                 for (var pn = 0; pn < pNodes.length; pn++) {
                     activeIds[pNodes[pn]] = true;
@@ -112,7 +129,7 @@ MinosOntology.prototype = {
         for (var tbl in model.active_tables) {
             if (tbl.indexOf('_') === 0) continue; // skip meta keys like _custom_tables
             var count = model.active_tables[tbl];
-            if (count > 0 && this._tableToNodes[tbl]) {
+            if (count > 0 && this._has(this._tableToNodes, tbl)) {
                 var tNodes = this._tableToNodes[tbl];
                 for (var tn = 0; tn < tNodes.length; tn++) {
                     activeIds[tNodes[tn]] = true;
@@ -124,7 +141,7 @@ MinosOntology.prototype = {
         for (var prod in this._productModules) {
             var modules = this._productModules[prod];
             for (var m = 0; m < modules.length; m++) {
-                if (activeIds[modules[m]]) {
+                if (this._has(activeIds, modules[m])) {
                     activeIds[prod] = true;
                     break;
                 }
@@ -134,7 +151,7 @@ MinosOntology.prototype = {
         // 4. Foundational nodes active if any application is active
         var hasAnyApp = false;
         for (var nid in activeIds) {
-            var node = this.nodes[nid];
+            var node = this._has(this.nodes, nid) ? this.nodes[nid] : null;
             if (node && node.layer === 'application') {
                 hasAnyApp = true;
                 break;
@@ -152,7 +169,7 @@ MinosOntology.prototype = {
         var activeNodeList = [];
         for (var aid in activeIds) {
             activeIdList.push(aid);
-            if (this.nodes[aid]) {
+            if (this._has(this.nodes, aid)) {
                 activeNodeList.push({
                     id: aid,
                     name: this.nodes[aid].name,
@@ -212,6 +229,19 @@ MinosOntology.prototype = {
             'external': 'External'
         };
 
+        // Node IDs and names come from the ontology tables: emit safe IDs and quoted, escaped labels.
+        // Every ontology id already safe for Mermaid is reserved first, so it keeps its own name.
+        var ids = { byNode: {}, used: {} };
+        for (var sid in this.nodes) {
+            if (this._isMermaidSafeId(sid)) ids.used['$' + sid] = true;
+        }
+        for (var se = 0; se < this.edges.length; se++) {
+            if (this._isMermaidSafeId(this.edges[se].source)) ids.used['$' + this.edges[se].source] = true;
+            if (this._isMermaidSafeId(this.edges[se].target)) ids.used['$' + this.edges[se].target] = true;
+        }
+        var self = this;
+        var idFor = function(nodeId) { return self._mermaidId(ids, nodeId); };
+
         var activeSet = {};
         for (var a = 0; a < activeNodeIds.length; a++) {
             activeSet[activeNodeIds[a]] = true;
@@ -223,18 +253,16 @@ MinosOntology.prototype = {
                 var node = this.nodes[nid];
                 if (node.layer !== layerId) continue;
 
-                var isActive = !!activeSet[nid];
-                var isRecommended = !!recommendedNodes[nid];
+                var isActive = this._has(activeSet, nid);
+                var isRecommended = this._has(recommendedNodes, nid) && !!recommendedNodes[nid];
 
                 if (mode === 'as_is' && !isActive) continue;
                 if (mode === 'recommended' && !isActive && !isRecommended) continue;
 
-                var style = '';
                 if (isRecommended && !isActive) {
-                    style = ':::recommended';
-                    layerNodes.push('    ' + nid + '[' + node.name + ' ⭐]' + style);
+                    layerNodes.push('    ' + idFor(nid) + '[' + this._mermaidLabel(node.name, nid, ' ⭐') + ']:::recommended');
                 } else {
-                    layerNodes.push('    ' + nid + '[' + node.name + ']');
+                    layerNodes.push('    ' + idFor(nid) + '[' + this._mermaidLabel(node.name, nid, '') + ']');
                 }
             }
 
@@ -256,9 +284,9 @@ MinosOntology.prototype = {
 
         for (var ei = 0; ei < this.edges.length; ei++) {
             var edge = this.edges[ei];
-            if (allRelevant[edge.source] && allRelevant[edge.target]) {
+            if (this._has(allRelevant, edge.source) && this._has(allRelevant, edge.target)) {
                 if (edge.rel_type !== 'extends' && edge.rel_type !== 'segregated_from') {
-                    lines.push('  ' + edge.source + ' --> ' + edge.target);
+                    lines.push('  ' + idFor(edge.source) + ' --> ' + idFor(edge.target));
                 }
             }
         }
@@ -267,6 +295,55 @@ MinosOntology.prototype = {
         lines.push('  classDef recommended fill:#fef3c7,stroke:#f59e0b,stroke-width:2px');
 
         return lines.join('\n');
+    },
+
+    /** True when an ontology id can be a Mermaid node ID as it is: a letter, then letters, digits, _. */
+    _isMermaidSafeId: function(nodeId) {
+        // Words Mermaid's flowchart grammar reserves; a node ID equal to one of them breaks the diagram.
+        var reserved = /^(end|graph|flowchart|subgraph|direction|style|classdef|class|click|call|href|linkstyle|interpolate|default|acctitle|accdescr)$/i;
+        return /^[A-Za-z][A-Za-z0-9_]*$/.test(nodeId) && !reserved.test(nodeId);
+    },
+
+    /**
+     * The Mermaid node ID for an ontology node id within one diagram (`ids` is per generateMermaid
+     * call). A safe id is used as it is. Any other id becomes letters, digits and underscores with an
+     * n_ prefix where needed, plus a numeric suffix if that name is taken, so ids that differ only in
+     * punctuation stay separate nodes and never take a safe id's name.
+     */
+    _mermaidId: function(ids, nodeId) {
+        var key = '$' + nodeId; // keys are prefixed, so an id like "hasOwnProperty" is an ordinary key
+        if (ids.byNode.hasOwnProperty(key)) return ids.byNode[key];
+        var unique = String(nodeId);
+        if (!this._isMermaidSafeId(unique)) {
+            var base = unique.replace(/[^A-Za-z0-9_]/g, '_');
+            if (!this._isMermaidSafeId(base)) base = 'n_' + base;
+            unique = base;
+            for (var n = 2; ids.used.hasOwnProperty('$' + unique); n++) unique = base + '_' + n;
+        }
+        ids.used['$' + unique] = true;
+        ids.byNode[key] = unique;
+        return unique;
+    },
+
+    /**
+     * A quoted Mermaid label for a node name, followed by `suffix`. Mermaid entity codes (#quot; #35;
+     * #37; …) stand in for every character that could end the quoted string, start an entity, a
+     * markdown string or a %% comment or %%{init}%% directive (Mermaid finds those even inside quotes),
+     * or read as HTML; line breaks become spaces. A blank name falls back to the node id, so a label
+     * is never empty (Mermaid rejects [""]).
+     */
+    _mermaidLabel: function(name, nodeId, suffix) {
+        var text = String(name || '').replace(/[\r\n\t\u2028\u2029]+/g, ' ').trim();
+        if (!text) text = String(nodeId || '').replace(/[\r\n\t\u2028\u2029]+/g, ' ').trim() || '(unnamed)';
+        var escaped = (text + (suffix || ''))
+            .replace(/#/g, '#35;')
+            .replace(/%/g, '#37;')
+            .replace(/"/g, '#quot;')
+            .replace(/&/g, '#amp;')
+            .replace(/</g, '#lt;')
+            .replace(/>/g, '#gt;')
+            .replace(/`/g, '#96;');
+        return '"' + escaped + '"';
     },
 
     type: 'MinosOntology'

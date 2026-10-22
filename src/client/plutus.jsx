@@ -109,6 +109,19 @@ function PlutusApp() {
           maxWidth: '1200px',
           margin: '0 auto'
         }}>
+          {scanData.status === 'stub' && (
+            <div role="status" style={{
+              background: '#fffbeb',
+              color: '#92400e',
+              padding: '16px',
+              marginBottom: '20px',
+              borderRadius: '8px',
+              border: '1px solid #fde68a'
+            }}>
+              {scanData.message || 'This scan is a placeholder; the figures below are not a real sizing.'}
+            </div>
+          )}
+
           {/* Summary Cards */}
           <div style={{
             display: 'grid',
@@ -177,7 +190,7 @@ function PlutusApp() {
                   <span>Credits</span>
                 </div>
                 {scanData.lines.map((line, index) => (
-                  <div key={index} style={{
+                  <div key={line.capability_id || index} style={{
                     display: 'grid',
                     gridTemplateColumns: '2fr 1fr 1fr 1fr',
                     gap: '16px',
@@ -187,11 +200,11 @@ function PlutusApp() {
                   }}>
                     <div>
                       <div style={{ fontWeight: '500', color: '#111827' }}>
-                        {line.cap_label || 'Unknown Capability'}
+                        {line.capability_label || 'Unknown Capability'}
                       </div>
-                      {line.scan_evidence && (
+                      {line.evidence && (
                         <div style={{ fontSize: '0.9rem', color: '#6b7280', marginTop: '4px' }}>
-                          {line.scan_evidence}
+                          {line.evidence}
                         </div>
                       )}
                     </div>
@@ -211,7 +224,7 @@ function PlutusApp() {
                       color: '#374151',
                       textAlign: 'center'
                     }}>
-                      {line.usage_value || 0} {line.usage_unit || 'units'}
+                      {line.usage_value || 0} {line.meter_unit || 'units'}
                     </span>
                     <span style={{ fontWeight: '600', color: '#f59e0b', textAlign: 'right' }}>
                       {formatCredits(line.credits_consumed || 0)}

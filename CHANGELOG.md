@@ -16,12 +16,52 @@ All notable changes to this project are documented here. The format follows
 - marked and DOMPurify are exact-pinned npm dependencies bundled into the page; mermaid
   is pinned to 12.1.0 on jsDelivr with a sha384 integrity hash (it was "latest", no SRI).
 - History endpoints clamp `?limit` to 1–100.
+- Minos diagrams escape table-sourced text: `MinosOntology.generateMermaid` quotes
+  every node label and replaces `"`, `#`, `%`, `&`, `<`, `>`, backticks and line breaks
+  with Mermaid entity codes or spaces, falls back to the node id for a blank name, and
+  turns node ids that are not plain identifiers (punctuation, a leading digit, Mermaid
+  keywords such as `end`) into unique safe IDs. Escaping `%` matters because Mermaid
+  reads `%%{init: …}%%` directives and `%%` comments even inside quoted labels: a node
+  name could set the diagram's theme, `themeCSS` and `htmlLabels`, or break the whole
+  diagram. With these changes each node name stays inside its own label (checked against
+  mermaid 12.1.0's parser for the directive, an unclosed `%%{` and an empty name). The
+  seeded diagrams are unchanged apart from the quotes
+  (`tests/minos-ontology-mermaid.test.mjs`).
 
 ### Fixed
 - Minos findings sort critical first (critical used to sort last).
+- Minos `any` blocks evaluate every check and keep all their evidence, so finding
+  messages no longer show raw placeholders (IT4IT-S2P-001 `{incident_count}`,
+  IT4IT-R2F-003 and ADOPT-002 `{kb_knowledge_count}`, INT-LEG-001
+  `{wf_workflow_count}`); those messages also reach the chat prompt. Whether a rule
+  fires is unchanged. A test builds a firing model for each seeded rule and fails on
+  any placeholder left in its message or recommendation.
+- `MinosOntology` treats ids, plugins and tables named like `Object.prototype` members
+  (`constructor`, `hasOwnProperty`, `toString`, `valueOf`) as ordinary keys: a
+  `depends_on` edge from `hasOwnProperty` or `constructor` used to stop the ontology
+  from loading, and such names could mark nodes active. It skips, with a warning, a node
+  whose `node_id` is empty or `__proto__` and an edge with such an endpoint.
+- `MinosRuleEngine._formatMessage` matches evidence keys literally (a `.` in a property
+  name was a regex wildcard, and a `(` threw) and inserts values as plain text (`$&` in
+  a value was a replacement pattern).
+- The Plutus page reads the field names that `/plutus/history` and the
+  `wdf_scan_line` table use (`capability_label`, `evidence`, `meter_unit`; it read
+  `cap_label`, `scan_evidence`, `usage_unit`), and shows the scanner's message when
+  the scan is the demo stub. `/plutus/history` lines now include `evidence`. A test
+  checks the page, the route and the table against each other.
+- The README quickstart uses `npm ci`, `npm run build`, `npm run deploy -- --auth
+  <alias>` and `npx now-sdk auth --add … --alias <alias>` instead of a global
+  `now-sdk`, which `npm install` does not provide, and explains where the alias comes from.
 
 ### Added
 - `npm test` (node --test, Node 22+) and a CI workflow running build and tests.
+- Tests for the Minos rule engine (`tests/minos-rule-engine.test.mjs`): every check
+  type, the `all`/`any`/`streams_covered_below` combinators, `_formatMessage`,
+  `_loadRulesFromTable`, and each seeded rule in `seed-data.now.ts` (valid
+  `eval_json` with known checks only, message placeholders the rule can fill, an
+  evaluation without unknown-check warnings). Tests for `VirgilChat._parseResponse`
+  and `_sanitizeMermaid` (`tests/virgil-chat-parse.test.mjs`). Both load the Script
+  Includes in a Node vm with stubbed Glide globals.
 
 
 ### Changed

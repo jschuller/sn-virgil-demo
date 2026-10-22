@@ -132,7 +132,8 @@ RestApi({
                     usage_value: parseFloat(lg.getValue('x_9418_virgil_usage_value')) || 0,
                     meter_unit: lg.getValue('x_9418_virgil_meter_unit'),
                     credits_per_unit: parseFloat(lg.getValue('x_9418_virgil_credits_per_unit')) || 0,
-                    credits_consumed: parseFloat(lg.getValue('x_9418_virgil_credits_consumed')) || 0
+                    credits_consumed: parseFloat(lg.getValue('x_9418_virgil_credits_consumed')) || 0,
+                    evidence: lg.getValue('x_9418_virgil_evidence') || ''
                 });
             }
             scans.push({

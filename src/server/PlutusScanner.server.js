@@ -1,3 +1,6 @@
+// scan() returns { status, message, total_credits, capabilities_detected, lines }. Each line uses the
+// /plutus/history names: capability_id, capability_label, detected, usage_value, meter_unit,
+// credits_per_unit, credits_consumed, evidence (see PlutusLine in src/client/services/VirgilService.js).
 var PlutusScanner = Class.create();
 PlutusScanner.prototype = {
     initialize: function() {},
