@@ -16,7 +16,7 @@
     "devDependencies": {
         "@servicenow/sdk": "4.13.6",
         "@servicenow/glide": "27.0.5",
-        "eslint": "8.57.1",
+        "eslint": "10.12.0",
         "@servicenow/eslint-plugin-sdk-app-plugin": "4.13.6",
         "jsdom": "30.1.1"
     },
