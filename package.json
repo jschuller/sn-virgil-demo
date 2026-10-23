@@ -4,10 +4,10 @@
     "description": "[BUILD AGENT GENERATED]:  ServiceNow Architecture and Pricing Intelligence Platform — three engines: Minos (architecture scan), Plutus (WDF credit sizing), Virgil Chat (LLM analysis)",
     "license": "UNLICENSED",
     "scripts": {
-        "build": "now-sdk build",
-        "deploy": "now-sdk install",
-        "transform": "now-sdk transform",
-        "types": "now-sdk dependencies",
+        "build": "NO_TELEMETRY=1 now-sdk build",
+        "deploy": "NO_TELEMETRY=1 now-sdk install",
+        "transform": "NO_TELEMETRY=1 now-sdk transform",
+        "types": "NO_TELEMETRY=1 now-sdk dependencies",
         "test": "node --test tests/*.test.mjs"
     },
     "engines": {

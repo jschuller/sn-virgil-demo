@@ -9,6 +9,9 @@ on:
 # comment, checkouts keep no token. The workflow grants nothing; each job asks for exactly what it needs.
 permissions: {}
 concurrency: { group: "ci-${{ github.ref }}", cancel-in-progress: true } # a newer push supersedes a running check
+# @servicenow/sdk 4.13+ sends usage telemetry (PostHog at sdk-a.service-now.com) unless NO_TELEMETRY is set.
+env:
+  NO_TELEMETRY: "1"
 
 jobs:
   build:
